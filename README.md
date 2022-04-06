@@ -1,3 +1,5 @@
+[![Documentation Status](https://readthedocs.org/projects/rentfreemedia/badge/?version=latest)](https://rentfreemedia.readthedocs.io/en/latest/?badge=latest)
+
 ## Rent Free Media
 
 RentFree Media is a media distribution frameowrk built on Django and Wagtail. With it you can publish either public or premium / subscription-based content, as services like Patreon, Apple Podcasts, and Substack do, for example.
