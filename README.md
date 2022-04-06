@@ -42,7 +42,9 @@ That's it!  After filling in the blanks you will be *your own* premium media dis
 
 Serving content to paying customers is not trivial to do securely and robustly. Your own Nginx installation is required to do this, as each request for premium content must first be authenticated, and then fetched from storage and routed back to the user. We cache media files on the server and thus the storage service is "just storage" for the Nginx reverse proxy in front of Django to serve end users through.  Media files are cached by Nginx on the server's local disk to minimize traffic between the front end and the back end. 
 
-Ansible scripts are provided in the ansible folder for automated deployment to Digital Ocean, which as a cloud service is particularly well suited to host this project because of their generous download bandwidth pricing. 
+Ansible scripts are provided in the ansible folder for automated deployment to Digital Ocean, which as a cloud service is particularly well suited to host this project because of their generous download bandwidth pricing.
+
+If you choose to deploy the project manually, refer to the Ansible templates (`ansible / includes / webserver` and `ansible / includes / systemd`) for Nginx configuration for what you need to set up, sans the Ansible variables. 
 
 Let's consider the math in terms of a Digital Ocean deployment:
 
