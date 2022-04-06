@@ -56,6 +56,10 @@ Presume that you have 20,000 paying customers who download your weekly (4 times 
 
 Even if we don't manage to convert the world with this project, we would hope to impress upon people that serving media is not worth 10% or 18% or 25% or 30% of your gross receipts, as other media distribution "services" seem to think by virtue of their pricing. The cloud service seems to think that it's worth $0.01 per gigabyte, and you should be looking to pay accordingly for this sort of thing.
 
+If you use Digital Ocean, signing up with our referral link via the button below would be appreciated!  You will get $100 credit as a new customer, and we'll get a referral credit after your first paid invoice.
+
+<a href="https://www.digitalocean.com/?refcode=17eecba47b58&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge"><img src="https://web-platforms.sfo2.cdn.digitaloceanspaces.com/WWW/Badge%201.svg" alt="DigitalOcean Referral Badge" /></a>
+
 ### License
 
 AGPL, because you are free to use this code as you see fit to publish your own content. Or even provide custom code based on this to others for a fee, if you are a developer and wish to work as a media hosting consultancy, for example, provided that you also release the source code you have added or changed. What you're not free to do is use this repository's original code as a basis for a closed-source "service"... like Patreon or Substack.  The point of all this is to have less of them, not enable more of them.
