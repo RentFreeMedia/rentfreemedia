@@ -2,31 +2,33 @@
 
 ## Rent Free Media
 
-RentFree Media is a media distribution frameowrk built on Django and Wagtail. With it you can publish either public or premium / subscription-based content, as services like Patreon, Apple Podcasts, and Substack do, for example.
+RentFree Media is a media distribution framework built on Django and Wagtail. With it you can publish either public or premium / subscription-based content similar to the features provided in services such as Patreon, Apple Podcasts, and Substack.
 
 ### Summary of Features
 
-* Your media distribution tools also become your brand's website. Media objects can also be embedded on your website's pages if you like
-* Click-able block-level CSS styling: add CSS classes to individual template blocks without getting into the code for minor style adjustments
-* The base templates are plain ole HTML and CSS. No javascript required to customize your site design, unless you want there to be.
-* Base templates are based on Bootstrap 5. You can customize your whole site design with a custom header, custom footer, and bootstrap.css modifications.
+* Your media distribution tools also become your brand's website. Media objects can also be embedded on your website's pages if you like.
+* Click-able block-level CSS styling: add CSS classes to individual template blocks without getting into the code for minor style adjustments.
+* The base templates are plain ole HTML and CSS. No JavaScript is required to customize your site's design, unless you want there to be.
+* Base templates use [Bootstrap 5](https://getbootstrap.com/docs/5.0/getting-started/introduction/). You can customize your whole site design with a custom header, custom footer, and `bootstrap.css` modifications.
 * Dismissable content walls / "paywalls" if you choose to employ them, defined at the individual page level.
-* Full text site-wide search, enabled by default
+* Full text site-wide search, enabled by default.
 * Customize ***anything*** by user tier. Subscription tier filters are included out of the box, and custom tier filters can be defined in python code and mixed, matched, or combined in any way you see fit.
 * Premium authenticated RSS feeds if you are publishing articles as one would do on Substack, or podcasts / video casts as one would do on Patreon, with secure links to paid subscription content.
 * RSS feeds for podcasts and video casts are configurable for most use cases. Define serial or episode-type feeds. Selectively include your promos of paid episodes... or not. Host your public episodes remotely... or not. Include your public feed combined with your paid feed for paying users... or not.
-* Write your notes and / or articles in WYSIWYG rich text or Markdown, your choice. Our customized Markdown library produces Chicago-style footnotes which work in iTunes.
+* Write your notes and / or articles in WYSIWYG rich text or Markdown, your choice. Our customized Markdown library produces [Chicago-style footnotes](https://www.chicagomanualofstyle.org/tools_citationguide.html) which work in iTunes.
 * Premium downloads are audit-able and those audits action-able. Revoke a publicly posted premium link based on download stats with a single click in the admin panel.
-* Rule-based email marketing tools, send templated email to your users by any user data you can define, without writing any code. 'Unsubscribe' links are handled automatically
-* Stripe integration for subscription payments tied to premium content, including Stripe features like promo / coupon codes
+* Rule-based email marketing tools, send templated email to your users by any user data you can define, without writing any code. 'Unsubscribe' links are handled automatically.
+* Stripe integration for subscription payments tied to premium content, including Stripe features like promo / coupon codes.
 * AJAX user comments, along with moderation tools, by whatever rules you choose.  Host comments in your own database for only paying users, or only signed-up users, or everyone in the world.
 * Professional content collaboration tools. You can have writers who need an editor's permission to publish, and editors who need an admin's permission to publish... or none of the above... or some of the above... configure your permissions how you like them.
-* 2 factor authentication, available to all users and enforceable on anyone with admin access if you choose.
+* Two factor authentication, available to all users and enforceable on anyone with admin access if you choose.
 * Google analytics integration, down to the link-level. Define tracked links and buttons right in the page editor, no need to write code.
-* JSON+LD SEO schema integration done right, out of the box, automatically.  Enable and define the settings and they "just work."
-* A cache based on [wagtail-cache](https://docs.coderedcorp.com/wagtail-cache/) with support for all Django cache backends. Use the local disk, or Redis, or Postgres, or Memcached if you prefer. All unauthenticated requests are cached out of the box, so Google, Apple, and anonymous users won't beat up your database. 
+* [JSON+LD](https://json-ld.org/) SEO schema integration done right, out of the box, automatically.  Enable and define the settings and they "just work."
+* A cache based on [wagtail-cache](https://docs.coderedcorp.com/wagtail-cache/) with support for all Django cache backends. Use the local disk, or Redis, or Postgres, or Memcached if you prefer. All unauthenticated requests are cached out of the box, so Google, Apple, and anonymous users won't beat up your database.
+
+### Thanks
  
-Particular thanks not only to the Wagtail core developers and the developers of all of the third party libraries we use, but also specifically to [CodeRedCorp](https://www.coderedcorp.com) for open-sourcing their Wagtail projects, it is from their examples that most of the base-level page design of this project is derived. And also particularly to [Kalob Taulien](https://github.com/KalobTaulien) for his wonderful Wagtail development tutorials. 
+Particular thanks not only to the Wagtail core developers and the developers of all of the third party libraries we use, but also specifically to [CodeRedCorp](https://www.coderedcorp.com) for open-sourcing their Wagtail projects. It is from their examples that most of the base-level page design of this project is derived. And also particularly to [Kalob Taulien](https://github.com/KalobTaulien) for his wonderful Wagtail development tutorials. 
 
 ### Things you will need
 
@@ -68,9 +70,9 @@ If you use Digital Ocean, signing up with our referral link via the button below
 
 AGPL, because you are free to use this code as you see fit to publish your own content. Or even provide custom code based on this to others for a fee, if you are a developer and wish to work as a media hosting consultancy, for example, provided that you also release the source code you have added or changed. What you're not free to do is use this repository's original code as a basis for a closed-source "service"... like Patreon or Substack.  The point of all this is to have less of them, not enable more of them.
 
-### Contributing and Local Development
+### Contributing
 
-PRs are welcome!  Please discuss new features you would like to see in the [discussions](https://github.com/RentFreeMedia/rentfreemedia/discussions) area so that we can keep the issues forum prioritized for bug reports. The [Needs / Wants](https://github.com/RentFreeMedia/rentfreemedia/issues/2) thread atop the issues forum is an up-to-date list of priorities for the future.
+PRs are welcome! Please discuss new features you would like to see in the [discussions](https://github.com/RentFreeMedia/rentfreemedia/discussions) area so that we can keep the issues forum prioritized for bug reports. The [Needs / Wants](https://github.com/RentFreeMedia/rentfreemedia/issues/2) thread atop the issues forum is an up-to-date list of priorities for the future.
 
 While this is a project released by two people and largely written by one guy in his spare time, I don't want to be inaccesible or standoff-ish to users. It is our hope that this project grows and thrives in spirit of open source, and users not only break free from their corporate publishers but also help others do the same. As Wagtail is a CMS that sits on top of, in front of, Django... feature proposals should integrate with Wagtail. While it's possible to do anything in code, doing it with future maintainability in mind is also a big consideration. Would-be contributors and custom solution developers would be wise to not only thoroughly read the [Wagtail docs](https://docs.wagtail.org), but also read the Wagtail code itself. 
 
@@ -80,7 +82,9 @@ All that said, the code should work with the Django development server, with som
 * There are some complex queries in the premium media RSS feeds that only work with PostgreSQL. As of this writing SQLite and MySQL do not support `distinct('field_name')` and thus will not work with this distribution in production. There is an error check against the payment app `views.py` in dev mode that will allow SQLite to work in dev mode, but with some caveats. In short, you must use Postgres in production and the "subscribe" page in dev mode may have duplicate entries on SQLite.
 * The code should run fine on Linux and Mac (as well as any other BSD Unix) but I don't test against Windows, so let us know if you have any Windows issues / solutions.
 
-Otherwise, to run the project locally:
+### Local Development
+
+To run the project locally:
 
 1. Download and unzip the repo. The "main" branch should always be stable, the "dev" branch should be the most recent.
 2. Edit `env` in the root of the rentfree directory and provide the required settings, then save the edited file as `.env`. Remote storage options are not required for development mode, it will serve the media files and static files from your local machine. At minimum, specify email server info, stripe account sandbox public/private key and webhook secret, the base_url of 127.0.0.1, and the human readable site name.
