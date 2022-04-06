@@ -208,21 +208,6 @@
       until: rentfree_docdnssl.failed == False
       no_log: True
 
-    - name: Create a CNAME DNS record to redirect www to the root domain...
-      community.digitalocean.digital_ocean_domain_record:
-        oauth_token: "{{ rentfree_doapikey.user_input }}"
-        state: present
-        domain: "{{ rentfree_host.user_input }}"
-        type: CNAME
-        name: "www"
-        data: "{{ rentfree_host.user_input }}"
-      delegate_to: localhost
-      register: rentfree_docnamerecord
-      delay: 5
-      retries: 3
-      until: rentfree_docnamerecord.failed == False
-      no_log: True
-
     - name: Create a CAA record for Letsencrypt on the newly created DNS record...
       community.digitalocean.digital_ocean_domain_record:
         oauth_token: "{{ rentfree_doapikey.user_input }}"
@@ -582,7 +567,7 @@
       until: rentfree_dowebdropletinfo.failed == False
       no_log: True
 
-    - name: Associate newly created droplet with the DNS A record for the specified domain...
+    - name: Associate newly created droplet with the DNS A record for the root domain...
       community.digitalocean.digital_ocean_domain_record:
         oauth_token: "{{ rentfree_doapikey.user_input }}"
         state: present
@@ -596,6 +581,22 @@
       delay: 5
       retries: 3
       until: rentfree_doarecord.failed == False
+      no_log: True
+
+    - name: Associate newly created droplet with the DNS A record for the www domain...
+      community.digitalocean.digital_ocean_domain_record:
+        oauth_token: "{{ rentfree_doapikey.user_input }}"
+        state: present
+        domain: "{{ rentfree_host.user_input }}"
+        type: A
+        name: "www"
+        data: "{{ rentfree_dowebdropletinfo.data[0].networks.v4[0].ip_address if rentfree_dowebdropletinfo.data[0].networks.v4[0].type == 'public' else rentfree_dowebdropletinfo.data[0].networks.v4[1].ip_address }}"
+        force_update: True
+      delegate_to: localhost
+      register: rentfree_dowwwrecord
+      delay: 5
+      retries: 3
+      until: rentfree_dowwwrecord.failed == False
       no_log: True
 
     - name: Add Ansible host info for the database server...

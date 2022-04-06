@@ -1,4 +1,13 @@
 server {
+    server_name www.{{ ansible_do_hostname }};
+    listen 80;
+    listen [::]:80;
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    include /etc/nginx/ssl.conf;
+    return 301 $scheme://{{ ansible_do_hostname }}$request_uri;
+}
+server {
     server_name {{ ansible_do_hostname }};
     listen 80 default_server;
     listen [::]:80 default_server;
