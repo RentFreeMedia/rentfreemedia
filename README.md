@@ -72,17 +72,17 @@ AGPL, because you are free to use this code as you see fit to publish your own c
 
 PRs are welcome!  Please discuss new features you would like to see in the [discussions](https://github.com/RentFreeMedia/rentfreemedia/discussions) area so that we can keep the issues forum prioritized for bug reports. The [Needs / Wants](https://github.com/RentFreeMedia/rentfreemedia/issues/2) thread atop the issues forum is an up-to-date list of priorities for the future.
 
-While this is a project released by two people and largely written by one guy in his spare time, I don't want to be inaccesible or standoff-ish to users. It is our hope that this project grows and thrives in spirit of open source, and users not only break free from their corporate publishers but also help others do the same. As Wagtail is a CMS that sits on top of, in front of, Django... feature proposals should integrate with Wagtail. While it's possible to do anything in code, doing it with future maintainability in mind is also a big consideration. Would-be contributors and custom solution developers would be wise to not only thoroughly read the [Wagtail docs](https://docs.wagtail.org), but also read the Wagtail code itself. 
+As Wagtail is a CMS that sits on top of, in front of, Django... feature proposals should integrate with Wagtail. While it's possible to do anything in code, doing it with future maintainability in mind is also a big consideration. Would-be contributors and custom solution developers would be wise to not only thoroughly read the [Wagtail docs](https://docs.wagtail.org), but also read the Wagtail code itself. 
 
-All that said, the code should work with the Django development server, with some caveats:
+The code should work with the Django development server, with some caveats:
 
 * Premium media will not 'play' directly without Nginx to respond to the X-Sendfile request. You'll see 200 response codes for them in the console / logs after they successfully authenticate, though.
-* There are some complex queries in the premium media RSS feeds that only work with PostgreSQL. As of this writing SQLite and MySQL do not support `distinct('field_name')` and thus will not work with this distribution in production. There is an error check against the payment app `views.py` in dev mode that will allow SQLite to work in dev mode, but with some caveats. In short, you must use Postgres in production and the "subscribe" page in dev mode may have duplicate entries on SQLite.
+* There are some complex queries in the premium media RSS feeds that only work with PostgreSQL. As of this writing SQLite and MySQL do not support `distinct('field_name')` and thus will not work with this distribution in production. There is an error check against the payment app `views.py` that will allow SQLite to work in dev mode, but you must use Postgres in production and the "subscribe" page in dev mode may have duplicate entries on SQLite.
 * The code should run fine on Linux and Mac (as well as any other BSD Unix) but I don't test against Windows, so let us know if you have any Windows issues / solutions.
 
 Otherwise, to run the project locally:
 
-1. Download and unzip the repo. The "main" branch should always be stable, the "dev" branch should be the most recent.
+1. Download and unzip the repo or a release. The "main" branch should always be stable, the "dev" branch should be the most recent.
 2. Edit `env` in the root of the rentfree directory and provide the required settings, then save the edited file as `.env`. Remote storage options are not required for development mode, it will serve the media files and static files from your local machine. At minimum, specify email server info, stripe account sandbox public/private key and webhook secret, the base_url of 127.0.0.1, and the human readable site name.
 3. Make a virtual environment (`python3 -m venv ~/rentfreelibs`)
 4. Activate the virtual environment (`~/rentfreelibs/bin/activate`)
