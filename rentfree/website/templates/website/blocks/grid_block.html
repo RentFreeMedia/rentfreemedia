@@ -1,0 +1,13 @@
+{% load wagtailcore_tags wagtailsettings_tags website_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+
+<div class="container{% if self.fluid %}-fluid{% endif %}"{% if self.settings.custom_id %} id="{{self.settings.custom_id}}"{% endif %}>
+
+  {% block grid_content %}
+  <div class="row{% if self.settings.custom_css_class %} {{self.settings.custom_css_class}}{% endif %}">
+      {% for column in self.content %}
+            {% include_block column %}
+      {% endfor %}
+  </div>
+  {% endblock %}
+
+</div>

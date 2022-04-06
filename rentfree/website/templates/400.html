@@ -1,0 +1,17 @@
+{% extends "website/pages/web_page.html" %}
+
+{% block title %}Bad Request{% endblock %}
+
+{% block body_class %}400{% endblock %}
+
+{% block content %}
+<div class="container">
+        <h2 class="mt-4">Bad Request</h2>
+        <br />
+        <h4>Sorry, your browser sent a request our site did not understand.</h4>
+        <p>
+            The error has been logged and reported to an engineer.
+            Please try again soon. If the issue persists, contact us to resolve.
+        </p>
+</div>
+{% endblock %}

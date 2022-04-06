@@ -1,0 +1,59 @@
+{% load comment_tags wagtailadmin_tags %}
+{% load i18n %}
+
+<div id="{{ comment.urlhash }}" class="js-updated-comment {% if comment.has_flagged_state %}flagged-comment {% endif %}{% block content_wrapper_cls %}{% if has_valid_profile %}col-12 col-md-10{% else %}col-12 mx-1 px-2{% endif %}{% endblock content_wrapper_cls %}">
+    <div class="{% block footer_wrapper_cls %}mt-2 text-muted{% endblock footer_wrapper_cls %}">
+            {% get_profile_url comment as profile_url %}
+            <{% if comment.user %}a{% else %}span{% endif %}
+                class="text-decoration-none {% block username_cls %}{% endblock username_cls %}" {% if profile_url %}href="{{ profile_url }}"{% endif %}
+                title="{% if comment.user %}{% blocktrans %}view {{ comment.user.user_name }} profile{% endblocktrans %}{% else %}{% trans 'comment by anonymous user' %}{% endif %}"
+            ><img class="content-author-img rounded-circle" src="{% avatar_url comment.user size=25 %}" width="50px" height="50px">
+                <strong>&nbsp;{{ comment.user.user_name }}</strong>
+            </{% if comment.user %}a{% else %}span{% endif %}> &nbsp;&bull;&nbsp;
+            {% if comment.is_edited %}
+                <span class="font-italic" title="{% trans 'Edited' %}"><small>{% blocktrans with edited_time=comment.edited|timesince %}Edited: {{ edited_time }} ago{% endblocktrans %}</small></span>
+            {% else %}
+                <span class="font-italic" title="{% trans 'Posted' %}"><small>{% blocktrans with posted_time=comment.posted|timesince %}{{ posted_time }} ago{% endblocktrans %}</small></span>
+            {% endif %}
+            <div id="comment_actions" class="float-end">{% can_delete_comment comment user as can_delete %}
+                {% if comment.user == user %}
+                    {% include 'comment/comments/delete_icon.html' %}
+                        {% include 'comment/comments/edit_icon.html' %}
+                {% elif can_delete %}
+                    {% include 'comment/comments/delete_icon.html' %}
+                    {% if comment.is_flagged %}
+                        {% include 'comment/comments/reject_icon.html' %}
+                        {% if comment.is_edited %}
+                            {% include 'comment/comments/resolve_icon.html' %}
+                        {% endif %}
+                    {% endif %}
+                    {% if user|can_block_users %}
+                        {% include 'comment/block/block_icon.html' %}
+                    {% endif %}
+                    {% if allowed_flags and not comment.is_flagged %}
+                        {% include "comment/flags/flags.html" %}
+                    {% endif %}
+                {% elif allowed_flags and not comment.is_flagged %}
+                    {% include "comment/flags/flags.html" %}
+                {% endif %}</div>
+        {% block comment_content %}
+    {% render_content comment %}
+    {% endblock comment_content %}
+    {% if comment.is_parent %}
+        <div class="js-comment-reactions mt-2 border-bottom border-secondary pb-2">
+            {% get_replies_count comment user as reply_count %}
+            <span class="js-reply-number {% block reply_count_cls %}{% endblock reply_count_cls %}">{{ reply_count }}</span>
+                <a class="js-reply-link text-decoration-none{% block reply_link_cls %}{% endblock reply_link_cls %} js-comment-reaction mr-2" href="#">
+                    {% include "comment/reactions/reply_icon.html" %}
+                </a>
+    {% else %}
+         <div class="js-comment-reactions mt-2">
+    {% endif %}
+            {% if comment.user == user and is_subscription_allowed %}
+            <div class="{% block follow_icon_wrapper_cls %}d-inline{% endblock follow_icon_wrapper_cls %}">
+                        {% include 'comment/follow/follow.html' with model_object=comment btnId=comment.id %}
+                    </div>
+            {% endif %}
+        {% include "comment/reactions/reactions.html" with comment=comment %}</div>
+    </div>
+</div>

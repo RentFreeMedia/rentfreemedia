@@ -1,0 +1,12 @@
+{% extends "website/blocks/grid_block.html" %}
+{% load wagtailcore_tags wagtailsettings_tags website_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+
+{% block grid_content %}
+<div class="row{% if self.settings.custom_css_class %} {{self.settings.custom_css_class}}{% endif %}">
+      {% for block in self.content %}
+      <div{% if self.settings.column_breakpoint %} class="col-{{ self.settings.column_breakpoint }}{% endif %}{% if self.column_size %}-{{ self.column_size }}"{% endif %}>
+            {% include_block block %}
+      </div>
+      {% endfor %}
+</div>
+{% endblock %}

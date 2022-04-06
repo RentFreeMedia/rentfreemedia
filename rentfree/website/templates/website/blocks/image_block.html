@@ -1,0 +1,6 @@
+{% load wagtailcore_tags wagtailimages_tags wagtailsettings_tags website_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+
+{% if self.convert_to_jpeg %}{% image self.image max-1000x1000 format-jpeg jpegquality-60 as self_image %}{% else %}{% image self.image max-1000x1000 as self_image %}{% endif %}
+
+<img src="{{self_image.url}}" {% if self.settings.custom_css_class %} class="{{self.settings.custom_css_class}}"{% endif %}{% if self.custom_css_id %} id="{{self.settings.custom_css_id}}"{% endif %} alt="{{self_image.image.title}}" />
+

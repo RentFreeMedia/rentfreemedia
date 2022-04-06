@@ -1,0 +1,21 @@
+{% extends "modeladmin/create.html" %}
+{% load i18n wagtailadmin_tags %}
+
+{% block header %}
+    {% include "modeladmin/includes/header_with_history.html" with title=view.get_page_title subtitle=view.get_page_subtitle icon=view.header_icon tabbed=1 merged=1 latest_log_entry=latest_log_entry history_url=history_url %}
+{% endblock %}
+
+{% block form_action %}{{ view.edit_url }}{% endblock %}
+
+{% block content %}
+{{block.super}}
+<div class="right col12">
+    {% include "modeladmin/website/downloadadmin/_user_reset_button.html" with page=page_for_status %}
+</div>
+{% endblock %}
+
+{% block form_actions %}
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

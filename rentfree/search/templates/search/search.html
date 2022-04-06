@@ -1,0 +1,55 @@
+{% extends "search/base.html" %}
+{% load django_bootstrap5 i18n website_tags %}
+
+{% block title %}
+    {% if not form.s.value %}
+        {% trans 'Search' %}
+    {% else %}
+        {% trans 'Search for' %} “{{form.s.value}}”
+    {%endif%}
+{% endblock %}
+
+{% block content %}
+
+        <div class="my-4">
+          {% if not form.s.value %}
+              <h2>{% trans 'Search' %}</h2>
+          {% else %}
+              <h2>{% trans 'Search for' %} “{{form.s.value}}”</h2>
+          {%endif%}
+        </div>
+
+        {% if pagetypes %}
+        {% query_update request.GET 'p' None as qs_nop %}
+        <div class="my-4">
+            <ul class="nav nav-pills">
+                <li class="nav-item">
+                    {% query_update qs_nop 't' None as qs_t %}
+                    <a class="nav-link {% if not form.t.value %}active{% endif %}" href="?{{qs_t.urlencode}}">{% trans 'All Results' %}</a>
+                </li>
+                {% for pt in pagetypes %}
+                <li class="nav-item">
+                    {% query_update qs_nop 't' pt.content_type.model as qs_t %}
+                    <a class="nav-link {% if form.t.value == pt.content_type.model %}active{% endif %}" href="?{{qs_t.urlencode}}">{{pt.search_name_plural}}</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if results_paginated.object_list %}
+            {% for page in results_paginated %}
+                {% with page=page.specific %}
+                    {% if not page.is_podcast_index %}{% if not page.is_article_index %} 
+                        {% include page.search_template %}
+                    {% endif %}{% endif %}
+                {% endwith %}
+            {% endfor %}
+            {% include "website/includes/pagination_standard.html" with items=results_paginated %}
+        {% else %}
+            {% if form.s.value %}
+              <p>{% trans 'No results found.' %}</p>
+            {% endif %}
+        {% endif %}
+    </div>
+{% endblock %}

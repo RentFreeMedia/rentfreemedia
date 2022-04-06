@@ -1,0 +1,74 @@
+{% extends "website/pages/web_page_notitle.html" %}
+{% load static wagtailadmin_tags wagtailsettings_tags wagtailcore_tags wagtailimages_tags website_tags %}
+{% get_settings use_default_site=True %}
+{% block schema %}{% if settings.website.SeoSettings.struct_meta and self.is_canonical_page %}
+<script type="application/ld+json">
+{% include "website/includes/struct_data_content.json" with page=self %}
+</script>{% endif %}{% endblock %}
+{% block description %}{{self.get_description}}{% endblock %}
+{% if self.get_author_name %}<meta name="author" content="{{self.get_author_name}}" />{% endif %}
+<meta name="created" content="{{self.get_pub_date|date:'c'}}" />
+<meta name="revised" content="{{self.last_published_at|date:'c'}}" />{% if settings.website.SeoSettings.og_meta and self.is_canonical_page %}
+{% block og_description %}{{self.get_description}}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_seo_extra %}{% if self.is_canonical_page %}
+<meta property="og:article:published_time" content="{{self.get_pub_date}}" />
+<meta property="og:article:modified_time" content="{{self.last_published_at}}" />{% if self.author %}{% for author in self.author.all %}
+<meta property="og:article:author" content="{% if author.author_display %}{{author.author_display}}{% elif author.first_name and author.last_name %}{{author.first_name}} {{author.last_name}}{% elif author.first_name or author.last_name == '' %}{{author.user_name}}{% endif %}" />{% endfor %}{% endif %}
+{% endif %}
+{% endblock %}
+{% endif %}
+
+{% if settings.website.SeoSettings.twitter_meta and self.is_canonical_page %}
+{% block twitter_card %}{% if self.cover_image %}summary_large_image{% else %}{{block.super}}{% endif %}{% endblock %}
+{% block twitter_seo_extra %}{% if self.caption and self.is_canonical_page %}
+<meta name="twitter:description" content="{{ self.caption }}">{% endif %}{% if settings.website.SocialMediaSettings.twitter and self.is_canonical_page %}
+<meta name="twitter:creator" content="{{settings.website.SocialMediaSettings.twitter}}" />{% endif %}
+{% endblock %}
+{% endif %}
+
+{% if self.uploaded_media or self.remote_media %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'website/css/plyr.min.css' %}" />
+{% endblock %}
+{% endif %}
+
+{% block content %}
+<article class="website-content">      
+    <div class="content-body">
+        {% include_block self.body with settings=settings %}
+    </div>
+
+{% block comments %}{% endblock %}
+</article>
+
+{% endblock %}
+{% if self.uploaded_media or self.remote_media %}
+{% block required_scripts %}
+<script type="text/javascript" src="{% static 'website/js/plyr.min.js' %}" crossorigin="anonymous"></script>
+{% if page.remote_media %}{% if page.remote_media_type == 'audio/mpeg' or page.remote_media_type == 'audio/x-m4a' or page.remote_media_type == 'audio/ogg' or page.remote_media_type == 'audio/wav' %}
+<script type="text/javascript">
+    const player = new Plyr("audio", {});
+</script>
+{% elif page.remote_media_type == 'video/x-m4v' or page.remote_media_type == 'video/ogg' or page.remote_media_type == 'video/webm' or page.remote_media_type == 'video/3gpp' %}
+<script type="text/javascript">
+    const player = new Plyr("video", {});
+</script>
+{% elif page.remote_media_type == 'youtube' or page.remote_media_type == 'vimeo' %}
+<script type="text/javascript">
+    const player = new Plyr("#player");
+</script>
+{% endif %}
+{% endif %}
+{% if page.uploaded_media %}{% if page.uploaded_media_type == 'audio/mpeg' or page.uploaded_media_type == 'audio/x-m4a' or page.uploaded_media_type == 'audio/ogg' or page.uploaded_media_type == 'audio/wav' %}
+<script type="text/javascript">
+    const player = new Plyr("audio", {});
+</script>
+{% elif page.uploaded_media_type == 'video/ogg' or page.uploaded_media_type == 'video/x-m4v' or page.uploaded_media_type == 'video/3gpp' or page.uploaded_media_type == 'video/webm' %}
+<script type="text/javascript">
+    const player = new Plyr("video", {});
+</script>
+{% endif %}
+{% endif %}
+{% endblock %}
+{% endif %}

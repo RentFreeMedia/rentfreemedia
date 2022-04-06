@@ -1,0 +1,11 @@
+{% extends "payments/base.html" %}
+{% load i18n account website_tags %}
+
+{% block title %}{% basefilename %}{% endblock %}
+
+{% block content %}
+    <h2>{% trans 'Payment Method Change' %}</h2>
+    <br />
+    <p>{% trans 'Success! Your payment method has been changed. You will be billed via the new payment method on your next subscription renewal date. If you need to make further changes to your account, you can do so via the ' %}<a href="{% url 'subscribe' %}">{% trans 'subscribe' %}</a> {% trans 'page you previously submitted.' %}</p>
+    <p class="mb-4">{% trans 'If you experience any difficulties, please ' %}<a href="mailto:{{ 'EMAIL_ADDR'|django_settings }}">{% trans 'contact us' %}</a>.</p>
+{% endblock %}

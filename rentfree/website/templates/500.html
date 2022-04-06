@@ -1,0 +1,24 @@
+{% extends "website/pages/web_page.html" %}
+{% load django_bootstrap5 %}
+
+{% block extra_head %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+{% endblock %}
+
+{% block title %}Internal Server Error{% endblock %}
+
+{% block body_class %}500{% endblock %}
+
+{% block content %}
+<div class="container">
+        <h2 class="mt-4">Internal Server Error</h2>
+        <br />
+        <h4>Sorry, our site has experienced an error.</h4>
+        <p>
+            The error has been logged and reported to an engineer.
+            Please try again soon. If the issue persists, contact us to resolve.
+        </p>
+        <div class="col-4 col-lg-2 mx-auto my-4"><a href="/"><button class="btn btn-block btn-primary">Home</button></a></div>
+</div>
+{% endblock %}

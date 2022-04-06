@@ -1,0 +1,4 @@
+{% load website_tags wagtailcore_tags wagtailsettings_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+User-agent: *
+Allow: /
+Sitemap: {{ current_site.root_url }}/sitemap.xml

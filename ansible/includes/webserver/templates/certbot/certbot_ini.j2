@@ -1,0 +1,8 @@
+key-type = ecdsa
+elliptic-curve = secp384r1
+email = {{ ansible_email_addr }}
+authenticator = dns-digitalocean
+dns-digitalocean-credentials = /etc/letsencrypt/digital_ocean.ini
+agree-tos = true
+post-hook = /usr/sbin/service nginx restart
+renew-hook = /usr/sbin/service nginx restart

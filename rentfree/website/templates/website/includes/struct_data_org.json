@@ -1,0 +1,21 @@
+{% load wagtailimages_tags wagtailsettings_tags wagtailcore_tags website_tags %}{% get_settings use_default_site=True %}
+{% wagtail_site as current_site %}
+{
+    "@context": "http://schema.org",
+    "@type": "{% if settings.website.SeoSettings.struct_org_type %}{{settings.website.SeoSettings.struct_org_type}}{% else %}Organization{% endif %}",
+    "url": "{{self.get_full_url}}",
+    "name": "{% if settings.website.SeoSettings.struct_org_name %}{{settings.website.SeoSettings.struct_org_name}}{% else %}{{current_site.site_name}}{% endif %}",{% if settings.website.SeoSettings.struct_org_logo %}{% image settings.website.SeoSettings.struct_org_logo fill-10000x10000-c75 format-jpeg jpegquality-60 as logo_11 %}{% image settings.website.SeoSettings.struct_org_logo fill-40000x30000-c75 format-jpeg jpegquality-60 as logo_21 %}{% image settings.website.SeoSettings.struct_org_logo fill-16000x9000-c75 format-jpeg jpegquality-60 as logo_169 %}
+    "logo": [
+        "{{logo_11.url}}",
+        "{{logo_21.url}}",
+        "{{logo_169.url}}"
+    ]{% elif settings.website.LayoutSettings.logo %}{% image settings.website.LayoutSettings.logo fill-10000x10000-c75 format-jpeg jpegquality-60 as logo_11 %}{% image settings.website.LayoutSettings.logo fill-40000x30000-c75 format-jpeg jpegquality-60 as logo_21 %}{% image settings.website.LayoutSettings.logo fill-16000x9000-c75 format-jpeg jpegquality-60 as logo_169 %}
+    "logo": [
+        "{{logo_11.url}}",
+        "{{logo_21.url}}",
+        "{{logo_169.url}}"
+    ]{% endif %}{% if settings.website.SeoSettings.main_entity_page %},
+    "mainEntityOfPage": "{{settings.website.SeoSettings.main_entity_page.full_url}}"{% endif %}{% if settings.website.SocialMediaSettings.social_json %},
+    "sameAs": {{settings.website.SocialMediaSettings.social_json|safe}}{% endif %}{% if settings.website.SeoSettings.struct_org_extra_json %},
+    {{settings.website.SeoSettings.struct_org_extra_json}}{% endif %}
+}

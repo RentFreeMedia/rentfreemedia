@@ -1,0 +1,7 @@
+{% load i18n wagtailadmin_tags wagtailcore_tags wagtailsettings_tags website_tags %}
+{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+    <p><b><span style="color:red;">WARNING:</span></b> Resetting a user's links will erase their download count(s), change their UUID to invalidate existing premium content links, and email them a notificaiton of this action. The reset will be logged in their profile, for the purpose of tracking problem users. The email template may be customized from 'users/templates/account/email/reset_message.txt' if you wish to do so.</p>
+    <br>
+    <br>
+    <a href="{{ current_site.root_url }}/reset-user/{{instance.user.user.email|base64}}/" class="button button-nostroke" title="{% trans 'Reset User Links' %}" style="margin:2em;">{% icon name="link-external" class_name="initial" %} {% trans "Reset User Links" %}
+    </a>

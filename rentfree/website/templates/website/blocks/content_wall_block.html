@@ -1,0 +1,30 @@
+{% load wagtailcore_tags wagtailsettings_tags website_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+<div class="modal fade content-wall{% if self.settings.custom_css_class %} {{self.settings.custom_css_class}}{% endif %}" tabindex="-1" role="dialog"{% if not self.content_wall.is_dismissible %} data-bs-backdrop="static" data-bs-keyboard="false"{% endif %}{% if self.content_wall.show_once %} data-showonce="true"{% endif %} data-wallid="{{self.content_wall.id}}"{% if self.settings.custom_id %} id="{{self.settings.custom_id}}"{% endif %}>
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+        <div class="modal-content">
+            {% if self.content_wall.is_dismissible %}
+            <div class="modal-header border-bottom-0 pb-0">
+                <button type="button" class="btn-close float-end" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            {% endif %}
+            <div class="modal-body">
+                <div class="container-fluid">
+                    {{self.content_wall.content}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function() {
+    $(".modal[data-showonce='true']").on('hidden.bs.modal', function() {
+    localStorage["bs_wall_" + $(this).data("wallid")] = "dismissed";
+    });
+    $(".modal[data-wallid]").each(function() {
+        if(localStorage["bs_wall_" + $(this).data("wallid")] === undefined) {
+            $(this).modal('show');
+        }
+    });
+});
+</script>

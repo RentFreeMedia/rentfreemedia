@@ -1,0 +1,6 @@
+{% extends "account/email/base_message.txt" %}
+{% load account i18n wagtailcore_tags %}{% wagtail_site as current_site %}
+
+{% block content %}{% autoescape off %}{% user_display user as user_display %}{% blocktrans with site_name=current_site.site_name site_domain=current_site.hostname %}You're receiving this e-mail because user {{ user_display }} has given your e-mail address to register an account on {{ site_domain }}.
+
+To confirm this is correct, go to {{ activate_url }}{% endblocktrans %}{% endautoescape %}{% endblock %}

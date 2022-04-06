@@ -1,0 +1,17 @@
+site_name: Rent Free Media docs
+site_url: https://rentfree.media/
+theme: readthedocs
+nav:
+    - About: index.md
+    - Installing: install.md
+    - Publishing Indexes: publish_index.md
+    - Publishing Content: publish_content.md
+    - Sending Email: send_email.md
+    - Creating Forms: create_forms.md
+    - Images & Media: manage_media.md
+    - Snippets: reusable_snippets.md
+    - Paid Content: paid_content.md
+    - Comments: manage_comments.md
+    - HTML Templates: customizing_templates.md
+    - Site Settings: site_settings.md
+    - Django Core Admin: django_admin.md

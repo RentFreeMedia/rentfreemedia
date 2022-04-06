@@ -1,0 +1,53 @@
+{% extends "payments/base.html" %}
+{% load i18n payments_tags website_tags static %}
+
+{% block title %}{% basefilename %}{% endblock %}
+
+{% block frontend_assets %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static 'payments/css/stripe.checkout.css' %}">
+{% endblock %}
+
+{% block content %}
+<h2>{% trans "Choose a Subscription Tier" %}</h2>
+<br />
+<p>{% blocktrans %}We keep our content ad-free by providing premium content to paid subscribers. Please choose a subscription tier below. All are monthly, recurring subscriptions.{% endblocktrans %}</p>
+<p>{% blocktrans %}After successful payment, this page will contain premium content access instructions. You can cancel an active subscription anytime by returning to this page and selecting the 'cancel' subscription option.{% endblocktrans %}</p>
+<form id="subscribe-new-form">
+  {% csrf_token %}
+ <div class="form-group">
+  <div class="col">
+   <div class="row">
+    {% for product in products %}
+    {% for price in product.plan_set.all %}
+    <div class="col col-md-4 pb-4 mx-auto">
+    <div class="card mb-4 h-100">
+     <div class="card-body" id="{{ product.name|slugify }}-card" role="button" onclick="planSelect('{{ product.name|slugify }}-card', '{{ product.name }}', '{{ price.human_readable_price }}', '{{ product.metadata|get_tier }}')">
+      <h4 class="card-title text-center"><label for="{{ product.name }}">{{ product.name }}</label></h4>
+      <p class="text-center">{{ price.human_readable_price }}</p>
+      <p class="card-text text-center">{{ product.description }}</p>
+    </div>
+  </div>
+</div>
+    {% endfor %}
+    {% endfor %}
+</div>
+</div>
+<div class="card col col-lg-9 mx-auto mb-4">
+ <div class="d-flex justify-content-between mx-4 mb-2 mt-4">
+  <p class="text-start d-inline-block">Plan:</p>
+  <p id="plan" class="float-right text-end d-inline-block">First select a plan above.</p>
+  </div>
+  <div class="d-flex justify-content-between mx-4 my-2">
+  <p class="text-start d-inline-block">Price:</p>
+  <p id="price" class="float-right text-end d-inline-block"></p>
+  <input type="hidden" name="prod_tier" value="prodtier" id="prodtier"></input>
+ </div>
+<div class="mx-auto mb-4"><button type="submit" id="submit" class="btn btn-block btn-primary"><div class="spinner-border spinner-border-sm m-1 text-light d-none" id="spinner" role="status"></div><span id="button-text">Subscribe</span></button></div></div></div>
+</form>
+{% endblock %}
+
+{% block required_scripts %}
+<script src="https://js.stripe.com/v3/"></script>
+<script src="{% static 'payments/js/stripe.checkout.js' %}" crossorigin="anonymous"></script>
+{% endblock %}

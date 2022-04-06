@@ -1,0 +1,35 @@
+user www-data www-data;
+worker_processes auto;
+pid /var/run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
+events {
+    worker_connections 1024;
+    multi_accept on;
+    use epoll;
+}
+http {
+    server_names_hash_bucket_size 64;
+    proxy_cache_path /var/cache/nginx keys_zone=media-files:4m max_size=10g inactive=1440m use_temp_path=off;
+    set_real_ip_from {{ ansible_private_ip_addr }};
+    real_ip_header X-Forwarded-For;
+    real_ip_recursive on; 
+    include /etc/nginx/mime.types;
+    include /etc/nginx/proxy.conf;
+    include /etc/nginx/optimization.conf;
+    default_type application/octet-stream;
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log warn;
+    sendfile on;
+    send_timeout 3600;
+    tcp_nopush on;
+    tcp_nodelay on;
+    open_file_cache max=500 inactive=10m;
+    open_file_cache_errors on;
+    keepalive_timeout 65;
+    reset_timedout_connection on;
+    server_tokens off;
+    resolver 127.0.0.53 valid=30s;
+    resolver_timeout 5s;
+    include /etc/nginx/conf.d/*.conf;
+    include /etc/nginx/sites-enabled/*.conf;
+}

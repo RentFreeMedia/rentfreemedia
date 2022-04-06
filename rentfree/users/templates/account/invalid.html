@@ -1,0 +1,9 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+
+{% block content %}
+    <h2>{% trans 'Unsubscribe' %}</h2>
+    <br />
+    <p>{% trans 'Failed! Your link either constains an invalid token, or it may have expired.' %}</p>
+
+{% endblock %}

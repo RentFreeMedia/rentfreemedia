@@ -1,0 +1,9 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+
+{% block content %}
+    <h2>{% trans 'Unsubscribe' %}</h2>
+    <br />
+    <p>{% trans 'Success! You have been removed from our mailing lists. If you wish to re-subscribe, you can do so anytime in your ' %}<a href="{% url 'profile' %}">{% trans 'profile' %}</a>.</p>
+
+{% endblock %}

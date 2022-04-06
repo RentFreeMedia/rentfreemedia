@@ -1,0 +1,7 @@
+smtp_tls: "Yes"
+smtp_starttls: "Yes"
+smtp_srv: "{{ rentfree_smtp.user_input }}"
+smtp_port: "{{ rentfree_port.user_input }}"
+smtp_from: "{{ ansible_email_addr }}"
+smtp_user: "{{ rentfree_smtp_user.user_input }}"
+smtp_pass: "{{ ansible_email_pass }}"

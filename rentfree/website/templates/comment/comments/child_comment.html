@@ -1,0 +1,3 @@
+<div class="js-child-comment {% block child_comment_wrapper_cls %}text-wrap pb-3 mb-3{% if not forloop.last %} border-bottom{% endif %} border-secondary{% endblock child_comment_wrapper_cls %}">
+    {% include 'comment/comments/comment_body.html' with comment=comment %}
+</div>

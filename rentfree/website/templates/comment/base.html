@@ -1,0 +1,21 @@
+{% include 'comment/static.html' %}
+{% include 'comment/comments/base.html' %}
+
+<div class="comment-modal" id="Modal">
+  <div class="modal-dialog" role="document">
+    <div class="comment-modal-content">
+    </div>
+  </div>
+</div>
+{% if allowed_flags %}
+    {% include "comment/flags/flag_modal.html" %}
+{% endif %}
+{% if is_subscription_allowed %}
+    {% include 'comment/follow/follow_modal.html' %}
+{% endif %}
+{% if is_blocking_allowed %}
+    {% include 'comment/block/block_modal.html' %}
+{% endif %}
+{% if user.is_anonymous and is_anonymous_allowed %}
+    {% include 'comment/anonymous/email_modal.html' %}
+{% endif %}

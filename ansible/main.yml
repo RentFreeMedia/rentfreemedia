@@ -1,0 +1,669 @@
+---
+- hosts: all
+  remote_user: rentfree
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_private_key_file: /Users/robertclayton/.ssh/rentfree_rsa
+  connection: local
+  gather_facts: False
+
+  tasks:
+
+    - name: I need your domain name...
+      ansible.builtin.pause:
+        prompt: "\nEnter your domain name, without https or www\n
+                ex: mypodcast.com\n"
+        echo: True
+      register: rentfree_host
+
+    - name: Tell me an address for server notification emails...
+      ansible.builtin.pause:
+        prompt: "\nEnter the email address that will receive servermonitoring\n
+                notifications. If not a Gmail, Yahoo, Outlook, AOL, or iCloud\n 
+                address I'll ask you for the server connection info later.\n"
+        echo: True
+      register: rentfree_email
+      no_log: True
+
+    - name: Tell me the server notification email address password...
+      ansible.builtin.pause:
+        prompt: "\nSet up an 'app password' if your email has multi-factor authentication, and enter it here\n"
+        echo: True
+      register: rentfree_emailpass
+      no_log: True
+
+    - name: What region do you want your servers to be in? i.e. physically closest to their customers...
+      ansible.builtin.pause:
+        prompt: "\nI need to know what region you want your\n
+                servers to be in, should be the one closest to\n
+                your customer base. Options include New York - USA,\n
+                Amsterdam - EU, San Francisco - USA, Singapore,\n
+                London - UK, Frankfurt - EU, Toronto - CA, and\n
+                Bangalore - India. If there are multiple datacenters\n
+                for a region you choose, you can just pick one at random\n\n.
+                Enter one of the corresponding codes in the list below:\n\n
+                NYC1\n
+                NYC2\n
+                NYC3\n
+                SFO1\n
+                SFO2\n
+                SGP1\n
+                LON1\n
+                FRA1\n
+                TOR1\n
+                BLR1\n\n"
+        echo: True
+      register: rentfree_doregion
+
+    - name: Tell me your Digital Ocean API key (the longest one)...
+      ansible.builtin.pause:
+        prompt: "\nEnter your Digital Ocean API key to set up Rentfree on your Digital Ocean account:\n\n"
+        echo: True
+      register: rentfree_doapikey
+      no_log: True
+
+    - name: Tell me your Digital Ocean Spaces access key...
+      ansible.builtin.pause:
+        prompt: "\nEnter your Digital Ocean Spaces access key (the shorter one in all caps):\n\n"
+        echo: True
+      register: rentfree_doaccess
+      no_log: True
+
+    - name: Tell me your Digital Ocean Spaces secret key...
+      ansible.builtin.pause:
+        prompt: "\nEnter your Digital Ocean Spaces secret key (the longer one with special characters):\n\n"
+        echo: True
+      register: rentfree_dosecret
+      no_log: True
+
+    - name: Print return information from the previous task
+      ansible.builtin.pause:
+        prompt: "\nOkay, setting up for hostname = {{ rentfree_host.user_input }},\n
+                Server Admin Email = {{ rentfree_email.user_input }}\n 
+                Server Region Name = {{ rentfree_doregion.user_input }}\n\n\n
+                If this is NOT WHAT YOU WANT, press ctrl-c and enter 'A' for abort, otherwise press enter to continue\n"
+        echo: False
+      no_log: True
+
+    - name: Continuing with installation of Rentfree on your new server, don't close this window until the process completes.
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: "Creating new project namespace on Digital Ocean..."
+      community.digitalocean.digital_ocean_project:
+        oauth_token: "{{ rentfree_doapikey.user_input }}"
+        name: "{{ rentfree_host.user_input }}"
+        state: "present"
+        description: "Rentfree Site - {{ rentfree_host.user_input }}"
+        purpose: "Web Application"
+        environment: "Production"
+      delegate_to: localhost
+      register: rentfree_doproj
+      delay: 5
+      retries: 3
+      until: rentfree_doproj.failed == False
+      no_log: True
+
+    - name: Create a domain and associate it with the new project namespace...
+      community.digitalocean.digital_ocean_domain:
+        oauth_token: "{{ rentfree_doapikey.user_input }}"
+        state: present
+        name: "{{ rentfree_host.user_input }}"
+        ip: 127.0.0.1
+        project: "{{ rentfree_doproj.data.project.name }}"
+      delegate_to: localhost
+      register: rentfree_dohost
+      delay: 5
+      retries: 3
+      until: rentfree_dohost.failed == False
+      no_log: True
+
+    - name: Create storage bucket for static files in Digital Ocean Spaces...
+      amazon.aws.s3_bucket:
+        aws_access_key: "{{ rentfree_doaccess.user_input }}"
+        aws_secret_key: "{{ rentfree_dosecret.user_input }}"
+        name: "{{ rentfree_host.user_input.split('.', 1)[0] }}-pub"
+        s3_url: "https://{{ rentfree_doregion.user_input|lower }}.digitaloceanspaces.com"
+        state: present
+        delete_public_access: False
+      register: rentfree_dopubbucket
+      delay: 5
+      retries: 3
+      until: rentfree_dopubbucket.failed == False
+      no_log: True
+
+    - name: Create storage bucket for private media files in Digital Ocean Spaces...
+      amazon.aws.s3_bucket:
+        aws_access_key: "{{ rentfree_doaccess.user_input }}"
+        aws_secret_key: "{{ rentfree_dosecret.user_input }}"
+        name: "{{ rentfree_host.user_input.split('.', 1)[0] }}-priv"
+        s3_url: "https://{{ rentfree_doregion.user_input|lower }}.digitaloceanspaces.com"
+        state: present
+        delete_public_access: True
+      register: rentfree_doprivbucket
+      delay: 5
+      retries: 3
+      until: rentfree_doprivbucket.failed == False
+      no_log: True
+
+    - name: Create private storage bucket for database backups in Digital Ocean Spaces...
+      amazon.aws.s3_bucket:
+        aws_access_key: "{{ rentfree_doaccess.user_input }}"
+        aws_secret_key: "{{ rentfree_dosecret.user_input }}"
+        name: "{{ rentfree_host.user_input.split('.', 1)[0] }}-db-backups"
+        s3_url: "https://{{ rentfree_doregion.user_input|lower }}.digitaloceanspaces.com"
+        state: present
+        delete_public_access: True
+      register: rentfree_dodbbucket
+      delay: 5
+      retries: 3
+      until: rentfree_dodbbucket.failed == False
+      no_log: True
+
+    - name: Assign Spaces we created to our newly created project...
+      uri:
+        url: "https://api.digitalocean.com/v2/projects/{{ rentfree_doproj.data.project.id }}/resources"
+        headers:
+          Authorization: "Bearer {{ rentfree_doapikey.user_input }}"
+          Accept: 'application/json'
+        body_format: json
+        body:
+          "resources": [
+            "do:space:{{ rentfree_host.user_input.split('.', 1)[0] }}-priv",
+            "do:space:{{ rentfree_host.user_input.split('.', 1)[0] }}-pub",
+            "do:space:{{ rentfree_host.user_input.split('.', 1)[0] }}-db-backups"
+          ]
+        validate_certs: no
+        follow_redirects: all
+        return_content: yes
+        status_code: 200
+        method: POST
+      register: rentfree_dospaceassign
+      delay: 5
+      retries: 3
+      until: rentfree_dospaceassign.failed == False
+      no_log: True
+
+    - name: Create an SSL certificate for the public spaces bucket that will hold static media and images...
+      uri:
+        url: "https://api.digitalocean.com/v2/certificates"
+        headers:
+          Authorization: "Bearer {{ rentfree_doapikey.user_input }}"
+          Accept: 'application/json'
+        body_format: json
+        body:
+          "name": "{{ rentfree_host.user_input.split('.', 1)[0] }}-cdn"
+          "type": "lets_encrypt"
+          "dns_names": [
+            "cdn.{{ rentfree_host.user_input }}"
+          ]
+        validate_certs: no
+        follow_redirects: all
+        return_content: yes
+        status_code: 202
+        method: POST
+      register: rentfree_docdnssl
+      delay: 5
+      retries: 3
+      until: rentfree_docdnssl.failed == False
+      no_log: True
+
+    - name: Create a CNAME DNS record to redirect www to the root domain...
+      community.digitalocean.digital_ocean_domain_record:
+        oauth_token: "{{ rentfree_doapikey.user_input }}"
+        state: present
+        domain: "{{ rentfree_host.user_input }}"
+        type: CNAME
+        name: "www"
+        data: "{{ rentfree_host.user_input }}"
+      delegate_to: localhost
+      register: rentfree_docnamerecord
+      delay: 5
+      retries: 3
+      until: rentfree_docnamerecord.failed == False
+      no_log: True
+
+    - name: Create a CAA record for Letsencrypt on the newly created DNS record...
+      community.digitalocean.digital_ocean_domain_record:
+        oauth_token: "{{ rentfree_doapikey.user_input }}"
+        state: present
+        domain: "{{ rentfree_host.user_input }}"
+        type: CAA
+        tag: issue
+        name: "@"
+        data: "letsencrypt.org"
+        flags: 0
+      delegate_to: localhost
+      register: rentfree_docaarecord
+      delay: 5
+      retries: 3
+      until: rentfree_docaarecord.failed == False
+      when: rentfree_docnamerecord.changed == True
+      no_log: True
+
+    - name: Get Spaces CDN certificate ID...
+      community.digitalocean.digital_ocean_certificate_info:
+        oauth_token: "{{ rentfree_doapikey.user_input }}"
+      register: rentfree_docertid
+      delay: 30
+      retries: 3
+      until: rentfree_docertid.data[0].state == 'verified'
+      no_log: True
+
+    - name: Create Spaces CDN for the public bucket...
+      community.digitalocean.digital_ocean_cdn_endpoints:
+        oauth_token: "{{ rentfree_doapikey.user_input }}"
+        certificate_id: "{{ rentfree_docertid.data[0].id }}"
+        state: present
+        origin: "{{ rentfree_host.user_input.split('.', 1)[0]}}-pub.{{ rentfree_doregion.user_input|lower }}.digitaloceanspaces.com"
+        custom_domain: "cdn.{{ rentfree_host.user_input }}"
+        ttl: 3600
+      delegate_to: localhost
+      register: rentfree_dospacecdn
+      no_log: True
+
+    - name: Create a VPC for the ancillary back end services to communicate securely...
+      community.digitalocean.digital_ocean_vpc:
+        oauth_token: "{{ rentfree_doapikey.user_input }}"
+        region: "{{ rentfree_doregion.user_input|lower }}"
+        name: "{{ rentfree_host.user_input.split('.', 1)[0]}}-vpc"
+        default: True
+        ip_range: 192.168.1.0/24
+      register: rentfree_domakevpc
+      delay: 5
+      retries: 3
+      until: rentfree_domakevpc.failed == False
+      no_log: True
+
+    - name: Create a SSH key pair for connecting to the servers we are going to create...
+      community.crypto.openssh_keypair:
+        path: "~/.ssh/{{ rentfree_host.user_input.split('.', 1)[0] }}"
+      delegate_to: localhost
+      register: rentfree_dosshkeypair
+
+    - name: "Send SSH public key to Digital Ocean for use on the servers we will create..."
+      community.digitalocean.digital_ocean_sshkey:
+        oauth_token: "{{ rentfree_doapikey.user_input }}"
+        name: "{{ rentfree_host.user_input.split('.', 1)[0] }}"
+        ssh_pub_key: "{{ rentfree_dosshkeypair.public_key }}"
+        state: present
+      register: rentfree_dosshpubkey
+      delay: 5
+      retries: 3
+      until: rentfree_dosshpubkey.failed == False
+
+    - name: "It's time to choose your database server size..."
+      ansible.builtin.pause:
+        prompt: "\n It's now time to decide how much server performance you want. You should\n 
+              familiarize yourself with them before proceeding, you will be billed for what\n
+              you choose by Digital Ocean. Server specifications and prices are available at\n\n\n
+              https://slugs.do-api.dev\n\n\n
+              The 'slug' is what you'll need to enter for the server size you want.\n\n
+              For now I need to know what size server you want for your database.\n\n
+              Please enter the 'slug' for the database server size you want below:\n\n"
+        echo: True
+      register: rentfree_dodbsize
+
+    - name: Make sure the database droplet doesn't already exist...
+      community.digitalocean.digital_ocean_droplet_info:
+        oauth_token: "{{ rentfree_doapikey.user_input }}"
+        name: "{{ rentfree_host.user_input.split('.', 1)[0] }}-db"
+      failed_when:
+        - result is not undefined
+      register: rentfree_dodbdropletcheck
+      delay: 5
+      retries: 3
+      until: rentfree_dodbdropletcheck.failed == False
+
+    - name: "Creating new database server from the specifications you chose in the previous step..."
+      community.digitalocean.digital_ocean_droplet:
+        state: present
+        oauth_token: "{{ rentfree_doapikey.user_input }}"
+        name: "{{ rentfree_host.user_input.split('.', 1)[0] }}-db"
+        size: "{{ rentfree_dodbsize.user_input }}"
+        region: "{{ rentfree_doregion.user_input|lower }}"
+        image: ubuntu-20-04-x64
+        wait_timeout: 500
+        ssh_keys: ["{{ rentfree_dosshpubkey.data.ssh_key.id }}"]
+        monitoring: True
+      register: rentfree_dodbdroplet
+      when: (rentfree_dodbsize.user_input == 's-1vcpu-1gb') or
+            (rentfree_dodbsize.user_input == 's-1vcpu-1gb-amd') or
+            (rentfree_dodbsize.user_input == 's-1vcpu-1gb-intel') or
+            (rentfree_dodbsize.user_input == 's-1vcpu-2gb') or
+            (rentfree_dodbsize.user_input == 's-1vcpu-2gb-amd') or
+            (rentfree_dodbsize.user_input == 's-1vcpu-2gb-intel') or
+            (rentfree_dodbsize.user_input == 's-2vcpu-2gb') or
+            (rentfree_dodbsize.user_input == 's-2vcpu-2gb-amd') or
+            (rentfree_dodbsize.user_input == 's-2vcpu-2gb-intel') or
+            (rentfree_dodbsize.user_input == 's-2vcpu-4gb') or
+            (rentfree_dodbsize.user_input == 's-2vcpu-4gb-amd') or
+            (rentfree_dodbsize.user_input == 's-2vcpu-4gb-intel') or
+            (rentfree_dodbsize.user_input == 's-4vcpu-8gb') or
+            (rentfree_dodbsize.user_input == 'c-2') or
+            (rentfree_dodbsize.user_input == 'c2-2vcpu-4gb') or
+            (rentfree_dodbsize.user_input == 's-4vcpu-8gb-amd') or
+            (rentfree_dodbsize.user_input == 's-4vcpu-8gb-intel') or
+            (rentfree_dodbsize.user_input == 'g-2vcpu-8gb') or
+            (rentfree_dodbsize.user_input == 'gd-2vcpu-8gb') or
+            (rentfree_dodbsize.user_input == 's-8vcpu-16gb') or
+            (rentfree_dodbsize.user_input == 'm-2vcpu-16gb') or
+            (rentfree_dodbsize.user_input == 'c-4') or
+            (rentfree_dodbsize.user_input == 'c2-4vcpu-8gb') or
+            (rentfree_dodbsize.user_input == 's-8vcpu-16gb-amd') or
+            (rentfree_dodbsize.user_input == 's-8vcpu-16gb-intel') or
+            (rentfree_dodbsize.user_input == 'm3-2vcpu-16gb') or
+            (rentfree_dodbsize.user_input == 'g-4vcpu-16gb') or
+            (rentfree_dodbsize.user_input == 'so-2vcpu-16gb') or
+            (rentfree_dodbsize.user_input == 'm6-2vcpu-16gb') or
+            (rentfree_dodbsize.user_input == 'gd-4vcpu-16gb') or
+            (rentfree_dodbsize.user_input == 'so1_5-2vcpu-16gb') or
+            (rentfree_dodbsize.user_input == 'm-4vcpu-32gb') or
+            (rentfree_dodbsize.user_input == 'c-8') or
+            (rentfree_dodbsize.user_input == 'c2-8vcpu-16gb') or
+            (rentfree_dodbsize.user_input == 'm3-4vcpu-32gb') or
+            (rentfree_dodbsize.user_input == 'g-8vcpu-32gb') or
+            (rentfree_dodbsize.user_input == 'so-4vcpu-32gb') or
+            (rentfree_dodbsize.user_input == 'm6-4vcpu-32gb') or
+            (rentfree_dodbsize.user_input == 'gd-8vcpu-32gb') or
+            (rentfree_dodbsize.user_input == 'so1_5-4vcpu-32gb') or
+            (rentfree_dodbsize.user_input == 'm-8vcpu-64gb') or
+            (rentfree_dodbsize.user_input == 'c-16') or
+            (rentfree_dodbsize.user_input == 'c2-16vcpu-32gb') or
+            (rentfree_dodbsize.user_input == 'm3-8vcpu-64gb') or
+            (rentfree_dodbsize.user_input == 'g-16vcpu-64gb') or
+            (rentfree_dodbsize.user_input == 'so-8vcpu-64gb') or
+            (rentfree_dodbsize.user_input == 'm6-8vcpu-64gb') or
+            (rentfree_dodbsize.user_input == 'gd-16vcpu-64gb') or
+            (rentfree_dodbsize.user_input == 'so1_5-8vcpu-64gb') or
+            (rentfree_dodbsize.user_input == 'm-16vcpu-128gb') or
+            (rentfree_dodbsize.user_input == 'c-32') or
+            (rentfree_dodbsize.user_input == 'c2-32vcpu-64gb') or
+            (rentfree_dodbsize.user_input == 'm3-16vcpu-128gb') or
+            (rentfree_dodbsize.user_input == 'm-24vcpu-192gb') or
+            (rentfree_dodbsize.user_input == 'g-32vcpu-128gb') or
+            (rentfree_dodbsize.user_input == 'so-16vcpu-128gb') or
+            (rentfree_dodbsize.user_input == 'm6-16vcpu-128gb') or
+            (rentfree_dodbsize.user_input == 'gd-32vcpu-128gb') or
+            (rentfree_dodbsize.user_input == 'm3-24vcpu-192gb') or
+            (rentfree_dodbsize.user_input == 'g-40vcpu-160gb') or
+            (rentfree_dodbsize.user_input == 'so1_5-16vcpu-128gb') or
+            (rentfree_dodbsize.user_input == 'm-32vcpu-256gb') or
+            (rentfree_dodbsize.user_input == 'gd-40vcpu-160gb') or
+            (rentfree_dodbsize.user_input == 'so-24vcpu-192gb') or
+            (rentfree_dodbsize.user_input == 'm6-24vcpu-192gb') or
+            (rentfree_dodbsize.user_input == 'm3-32vcpu-256gb') or
+            (rentfree_dodbsize.user_input == 'so1_5-24vcpu-192gb') or
+            (rentfree_dodbsize.user_input == 'so-32vcpu-256gb') or
+            (rentfree_dodbsize.user_input == 'm6-32vcpu-256gb') or
+            (rentfree_dodbsize.user_input == 'so1_5-32vcpu-256gb')
+      delay: 5
+      retries: 3
+      until: rentfree_dodbdroplet.failed == False
+      no_log: True
+
+    - name: Assign database droplet we created to our project...
+      uri:
+        url: "https://api.digitalocean.com/v2/projects/{{ rentfree_doproj.data.project.id }}/resources"
+        headers:
+          Authorization: "Bearer {{ rentfree_doapikey.user_input }}"
+          Accept: 'application/json'
+        body_format: json
+        body:
+          "resources": [
+            "do:droplet:{{ rentfree_dodbdroplet.data.droplet.id }}"
+          ]
+        validate_certs: no
+        follow_redirects: all
+        return_content: yes
+        status_code: 200
+        method: POST
+      register: rentfree_dodbassign
+      delay: 5
+      retries: 3
+      until: rentfree_dodbassign.failed == False
+      no_log: True
+
+    - name: "It's time to choose your web server size..."
+      ansible.builtin.pause:
+        prompt: "\n It's now time to decide how much server performance you want. This step\n 
+              is the same as the one prior for the database, you will be billed for what\n
+              you choose by Digital Ocean. Server specifications and prices are available at\n\n\n
+              https://slugs.do-api.dev\n\n\n
+              The 'slug' is what you'll need to enter for the server size you want.\n\n
+              Again, I need to know what size server you want for your web site.\n\n
+              Please enter the 'slug' for the web server size you want below:\n\n"
+        echo: True
+      register: rentfree_dowebsize
+      delay: 5
+      retries: 3
+      until: rentfree_dowebsize.failed == False
+
+    - name: Make sure the web droplet doesn't already exist...
+      community.digitalocean.digital_ocean_droplet_info:
+        oauth_token: "{{ rentfree_doapikey.user_input }}"
+        name: "{{ rentfree_host.user_input.split('.', 1)[0] }}-web"
+      failed_when:
+        - result is not undefined
+      register: rentfree_dowebdropletcheck
+      delay: 5
+      retries: 3
+      until: rentfree_dowebdropletcheck.failed == False
+
+    - name: "Creating new web server from the specifications you chose in the previous step..."
+      community.digitalocean.digital_ocean_droplet:
+        state: present
+        oauth_token: "{{ rentfree_doapikey.user_input }}"
+        name: "{{ rentfree_host.user_input.split('.', 1)[0] }}-web"
+        size: "{{ rentfree_dodbsize.user_input }}"
+        region: "{{ rentfree_doregion.user_input|lower }}"
+        image: ubuntu-20-04-x64
+        wait_timeout: 500
+        ssh_keys: ["{{ rentfree_dosshpubkey.data.ssh_key.id }}"]
+        monitoring: True
+      register: rentfree_dowebdroplet
+      when: (rentfree_dowebsize.user_input == 's-1vcpu-1gb') or
+            (rentfree_dowebsize.user_input == 's-1vcpu-1gb-amd') or
+            (rentfree_dowebsize.user_input == 's-1vcpu-1gb-intel') or
+            (rentfree_dowebsize.user_input == 's-1vcpu-2gb') or
+            (rentfree_dowebsize.user_input == 's-1vcpu-2gb-amd') or
+            (rentfree_dowebsize.user_input == 's-1vcpu-2gb-intel') or
+            (rentfree_dowebsize.user_input == 's-2vcpu-2gb') or
+            (rentfree_dowebsize.user_input == 's-2vcpu-2gb-amd') or
+            (rentfree_dowebsize.user_input == 's-2vcpu-2gb-intel') or
+            (rentfree_dowebsize.user_input == 's-2vcpu-4gb') or
+            (rentfree_dowebsize.user_input == 's-2vcpu-4gb-amd') or
+            (rentfree_dowebsize.user_input == 's-2vcpu-4gb-intel') or
+            (rentfree_dowebsize.user_input == 's-4vcpu-8gb') or
+            (rentfree_dowebsize.user_input == 'c-2') or
+            (rentfree_dowebsize.user_input == 'c2-2vcpu-4gb') or
+            (rentfree_dowebsize.user_input == 's-4vcpu-8gb-amd') or
+            (rentfree_dowebsize.user_input == 's-4vcpu-8gb-intel') or
+            (rentfree_dowebsize.user_input == 'g-2vcpu-8gb') or
+            (rentfree_dowebsize.user_input == 'gd-2vcpu-8gb') or
+            (rentfree_dowebsize.user_input == 's-8vcpu-16gb') or
+            (rentfree_dowebsize.user_input == 'm-2vcpu-16gb') or
+            (rentfree_dowebsize.user_input == 'c-4') or
+            (rentfree_dowebsize.user_input == 'c2-4vcpu-8gb') or
+            (rentfree_dowebsize.user_input == 's-8vcpu-16gb-amd') or
+            (rentfree_dowebsize.user_input == 's-8vcpu-16gb-intel') or
+            (rentfree_dowebsize.user_input == 'm3-2vcpu-16gb') or
+            (rentfree_dowebsize.user_input == 'g-4vcpu-16gb') or
+            (rentfree_dowebsize.user_input == 'so-2vcpu-16gb') or
+            (rentfree_dowebsize.user_input == 'm6-2vcpu-16gb') or
+            (rentfree_dowebsize.user_input == 'gd-4vcpu-16gb') or
+            (rentfree_dowebsize.user_input == 'so1_5-2vcpu-16gb') or
+            (rentfree_dowebsize.user_input == 'm-4vcpu-32gb') or
+            (rentfree_dowebsize.user_input == 'c-8') or
+            (rentfree_dowebsize.user_input == 'c2-8vcpu-16gb') or
+            (rentfree_dowebsize.user_input == 'm3-4vcpu-32gb') or
+            (rentfree_dowebsize.user_input == 'g-8vcpu-32gb') or
+            (rentfree_dowebsize.user_input == 'so-4vcpu-32gb') or
+            (rentfree_dowebsize.user_input == 'm6-4vcpu-32gb') or
+            (rentfree_dowebsize.user_input == 'gd-8vcpu-32gb') or
+            (rentfree_dowebsize.user_input == 'so1_5-4vcpu-32gb') or
+            (rentfree_dowebsize.user_input == 'm-8vcpu-64gb') or
+            (rentfree_dowebsize.user_input == 'c-16') or
+            (rentfree_dowebsize.user_input == 'c2-16vcpu-32gb') or
+            (rentfree_dowebsize.user_input == 'm3-8vcpu-64gb') or
+            (rentfree_dowebsize.user_input == 'g-16vcpu-64gb') or
+            (rentfree_dowebsize.user_input == 'so-8vcpu-64gb') or
+            (rentfree_dowebsize.user_input == 'm6-8vcpu-64gb') or
+            (rentfree_dowebsize.user_input == 'gd-16vcpu-64gb') or
+            (rentfree_dowebsize.user_input == 'so1_5-8vcpu-64gb') or
+            (rentfree_dowebsize.user_input == 'm-16vcpu-128gb') or
+            (rentfree_dowebsize.user_input == 'c-32') or
+            (rentfree_dowebsize.user_input == 'c2-32vcpu-64gb') or
+            (rentfree_dowebsize.user_input == 'm3-16vcpu-128gb') or
+            (rentfree_dowebsize.user_input == 'm-24vcpu-192gb') or
+            (rentfree_dowebsize.user_input == 'g-32vcpu-128gb') or
+            (rentfree_dowebsize.user_input == 'so-16vcpu-128gb') or
+            (rentfree_dowebsize.user_input == 'm6-16vcpu-128gb') or
+            (rentfree_dowebsize.user_input == 'gd-32vcpu-128gb') or
+            (rentfree_dowebsize.user_input == 'm3-24vcpu-192gb') or
+            (rentfree_dowebsize.user_input == 'g-40vcpu-160gb') or
+            (rentfree_dowebsize.user_input == 'so1_5-16vcpu-128gb') or
+            (rentfree_dowebsize.user_input == 'm-32vcpu-256gb') or
+            (rentfree_dowebsize.user_input == 'gd-40vcpu-160gb') or
+            (rentfree_dowebsize.user_input == 'so-24vcpu-192gb') or
+            (rentfree_dowebsize.user_input == 'm6-24vcpu-192gb') or
+            (rentfree_dowebsize.user_input == 'm3-32vcpu-256gb') or
+            (rentfree_dowebsize.user_input == 'so1_5-24vcpu-192gb') or
+            (rentfree_dowebsize.user_input == 'so-32vcpu-256gb') or
+            (rentfree_dowebsize.user_input == 'm6-32vcpu-256gb') or
+            (rentfree_dowebsize.user_input == 'so1_5-32vcpu-256gb')
+      delay: 5
+      retries: 3
+      until: rentfree_dowebdroplet.failed == False
+      no_log: True
+
+    - name: Assign web server droplet we created to our project...
+      uri:
+        url: "https://api.digitalocean.com/v2/projects/{{ rentfree_doproj.data.project.id }}/resources"
+        headers:
+          Authorization: "Bearer {{ rentfree_doapikey.user_input }}"
+          Accept: 'application/json'
+        body_format: json
+        body:
+          "resources": [
+            "do:droplet:{{ rentfree_dowebdroplet.data.droplet.id }}"
+          ]
+        validate_certs: no
+        follow_redirects: all
+        return_content: yes
+        status_code: 200
+        method: POST
+      register: rentfree_dowebassign
+      delay: 5
+      retries: 3
+      until: rentfree_dowebassign.failed == False
+      no_log: True
+
+    - name: Get database droplet network info...
+      community.digitalocean.digital_ocean_droplet_info:
+        oauth_token: "{{ rentfree_doapikey.user_input }}"
+        name: "{{ rentfree_host.user_input.split('.', 1)[0] }}-db"
+      failed_when:
+        - result is not undefined
+      register: rentfree_dodbdropletinfo
+      delay: 5
+      retries: 3
+      until: rentfree_dodbdropletinfo.failed == False
+
+    - name: Get webserver droplet network info...
+      community.digitalocean.digital_ocean_droplet_info:
+        oauth_token: "{{ rentfree_doapikey.user_input }}"
+        name: "{{ rentfree_host.user_input.split('.', 1)[0] }}-web"
+      failed_when:
+        - result is not undefined
+      register: rentfree_dowebdropletinfo
+      delay: 5
+      retries: 3
+      until: rentfree_dowebdropletinfo.failed == False
+      no_log: True
+
+    - name: Associate newly created droplet with the DNS A record for the specified domain...
+      community.digitalocean.digital_ocean_domain_record:
+        oauth_token: "{{ rentfree_doapikey.user_input }}"
+        state: present
+        domain: "{{ rentfree_host.user_input }}"
+        type: A
+        name: "@"
+        data: "{{ rentfree_dowebdropletinfo.data[0].networks.v4[0].ip_address if rentfree_dowebdropletinfo.data[0].networks.v4[0].type == 'public' else rentfree_dowebdropletinfo.data[0].networks.v4[1].ip_address }}"
+        force_update: True
+      delegate_to: localhost
+      register: rentfree_doarecord
+      delay: 5
+      retries: 3
+      until: rentfree_doarecord.failed == False
+      no_log: True
+
+    - name: Add Ansible host info for the database server...
+      local_action:
+        module: ansible.builtin.add_host
+        hostname: rentfree-db
+        ansible_host: "{{ rentfree_dodbdropletinfo.data[0].networks.v4[0].ip_address if rentfree_dodbdropletinfo.data[0].networks.v4[0].type == 'public' else rentfree_dodbdropletinfo.data[0].networks.v4[1].ip_address }}"
+        ansible_user: root
+        ansible_email_addr: "{{ rentfree_email.user_input }}"
+        ansible_ssh_private_key_file: "~/.ssh/{{ rentfree_host.user_input.split('.', 1)[0] }}"
+        ansible_ssh_public_key_file: "~/.ssh/{{ rentfree_host.user_input.split('.', 1)[0] }}.pub"
+        ansible_private_ip_addr: "{{ rentfree_dodbdropletinfo.data[0].networks.v4[0].ip_address if rentfree_dodbdropletinfo.data[0].networks.v4[0].type == 'private' else rentfree_dodbdropletinfo.data[0].networks.v4[1].ip_address }}"
+        ansible_db_backup_bucket: "{{ rentfree_host.user_input.split('.', 1)[0] }}-db-backups"
+        ansible_dbserver_name: "{{ rentfree_host.user_input.split('.', 1)[0] }}-db"
+        ansible_do_region: "{{ rentfree_doregion.user_input|lower }}"
+        ansible_do_spaces_accesskey: "{{ rentfree_doaccess.user_input }}"
+        ansible_do_spaces_secretkey: "{{ rentfree_dosecret.user_input }}"
+        ansible_do_apikey: "{{ rentfree_doapikey.user_input }}"
+        ansible_do_dbdroplet_id: "{{ rentfree_dodbdroplet.data.droplet.id }}"
+      no_log: True
+
+    - name: Add Ansible host info for the web server...
+      local_action:
+        module: ansible.builtin.add_host
+        hostname: rentfree-web
+        ansible_host: "{{ rentfree_dowebdropletinfo.data[0].networks.v4[0].ip_address if rentfree_dowebdropletinfo.data[0].networks.v4[0].type == 'public' else rentfree_dowebdropletinfo.data[0].networks.v4[1].ip_address }}"
+        ansible_user: root
+        ansible_email_addr: "{{ rentfree_email.user_input }}"
+        ansible_email_pass: "{{ rentfree_emailpass.user_input }}"
+        ansible_ssh_private_key_file: "~/.ssh/{{ rentfree_host.user_input.split('.', 1)[0] }}"
+        ansible_ssh_public_key_file: "~/.ssh/{{ rentfree_host.user_input.split('.', 1)[0] }}.pub"
+        ansible_private_ip_addr: "{{ rentfree_dowebdropletinfo.data[0].networks.v4[0].ip_address if rentfree_dowebdropletinfo.data[0].networks.v4[0].type == 'private' else rentfree_dowebdropletinfo.data[0].networks.v4[1].ip_address }}"
+        ansible_dbserver_host: "{{ rentfree_dodbdropletinfo.data[0].networks.v4[0].ip_address if rentfree_dodbdropletinfo.data[0].networks.v4[0].type == 'private' else rentfree_dodbdropletinfo.data[0].networks.v4[1].ip_address }}"
+        ansible_dbserver_name: "{{ rentfree_host.user_input.split('.', 1)[0] }}-db"
+        ansible_do_apikey: "{{ rentfree_doapikey.user_input }}"
+        ansible_do_webdroplet_id: "{{ rentfree_dowebdroplet.data.droplet.id }}"
+        ansible_do_hostname: "{{ rentfree_host.user_input }}"
+        ansible_do_webserver_name: "{{ rentfree_host.user_input.split('.', 1)[0] }}-web"
+        ansible_do_dbdroplet_id: "{{ rentfree_dodbdroplet.data.droplet.id }}"
+        ansbile_do_s3_accesskey: "{{ rentfree_doaccess.user_input }}"
+        ansible_do_s3_secretkey: "{{ rentfree_dosecret.user_input }}"
+        ansible_do_priv_bucket: "{{ rentfree_host.user_input.split('.', 1)[0] }}-priv"
+        ansible_do_pub_bucket: "{{ rentfree_host.user_input.split('.', 1)[0] }}-pub"
+        ansible_do_cdn_hostname: "cdn.{{ rentfree_host.user_input }}"
+        ansible_do_region: "{{ rentfree_doregion.user_input|lower }}"
+        anislbe_do_sitename: "{{ rentfree_host.user_input.split('.', 1)[0]|title }}"
+      no_log: True
+
+- name: Configure the new database droplet...
+  hosts: rentfree-db
+  gather_facts: False
+  tasks:
+
+    - name: Configure the database server...
+      import_tasks: includes/dbserver/postgresql.yml
+
+
+- name: Configure the new webserver droplet...
+  hosts: rentfree-web
+  gather_facts: False
+  tasks:
+
+    - name: Configure the webserver...
+      import_tasks: includes/webserver/webserver.yml
+
+- name: Take snapshots of droplets and set up firewalls...
+  hosts: rentfree-web
+  gather_facts: False
+  tasks:
+
+    - import_tasks: includes/snapshots_firewalls.yml

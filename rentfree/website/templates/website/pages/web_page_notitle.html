@@ -1,0 +1,15 @@
+{% extends "website/pages/base.html" %}
+
+{% block header %}
+{% if self.page_header %}{% include 'website/snippets/header.html' %}{% endif %}
+{% endblock %}
+
+{% block container %}
+<div class="flex-grow-1 body-container m-4">
+  <div class="row">
+    <div class="col-md-9 mx-auto">
+{% endblock %}
+
+{% block footer %}
+{% if self.page_footer %}{% include 'website/snippets/footer.html' %}{% endif %}
+{% endblock %}

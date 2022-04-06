@@ -1,0 +1,120 @@
+{% load static django_bootstrap5 website_tags i18n wagtailcore_tags wagtailimages_tags wagtailsettings_tags wagtailuserbar wagtailadmin_tags %}
+{% get_settings use_default_site=True %}{% wagtail_site as current_site %}{% get_current_language as LANGUAGE_CODE %}
+<!DOCTYPE html>{% if settings.website.SeoSettings.og_meta and self.is_canonical_page %}
+<html prefix="og: http://ogp.me/ns#" lang="{{ LANGUAGE_CODE }}" class="h-100">{% else %}
+<html lang="{{ LANGUAGE_CODE }}" class="h-100">{% endif %}
+<head>{% block tracking %}
+{% if settings.website.AnalyticsSettings.ga_tracking_id %}
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={{settings.website.AnalyticsSettings.ga_tracking_id}}"></script>
+<script>
+track_clicks = {{settings.website.AnalyticsSettings.ga_track_button_clicks|yesno:"true,false"}};
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '{{settings.website.AnalyticsSettings.ga_tracking_id}}');
+</script>{% if settings.website.AnalyticsSettings.ga_track_button_clicks %}
+<script type="text/javascript" src="{% versioned_static 'wagtailadmin/js/vendor/jquery-3.6.0.min.js' %}"></script>{% endif %}{% endif %}{% endblock %}
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+{% block schema %}{% endblock %}
+{% block html_seo_base %}
+<title>{% block title %}{% if self.get_page_title %}{{self.get_page_title}}{% endif %}{% endblock %}{% block title_suffix %} - {{current_site.site_name}}{% endblock %}</title>
+<meta name="description" content="{% block description %}{% if self.search_description %}{{ self.search_description }}{% endif %}{% endblock %}" />
+{% if self.is_canonical_page %}
+<link rel="canonical" href="{% block canonical %}{{self.get_full_url}}{% endblock %}">{% endif %}{% endblock %}
+{% if self.is_canonical_page %}
+<meta property="og:title" content="{% block og_title %}{% if self.seo_title %}{{self.seo_title}}{% else %}{{self.title|titlesplit}}{% endif %}{% endblock %}" />
+<meta property="og:description" content="{% block og_description %}{% if self.search_description %}{{ self.search_description }}{% endif %}{% endblock %}" />
+<meta property="og:site_name" content="{% block og_site_name %}{{self.get_site.site_name}}{% endblock %}" />
+<meta property="og:type" content="{% block og_type %}website{% endblock %}" />
+<meta property="og:url" content="{% block og_url %}{{self.get_full_url}}{% endblock %}" />
+<meta property="og:image" content="{% block og_image %}{% og_image self %}{% endblock %}" />
+{% endif %}
+{% block og_seo_extra %}{% endblock %}
+{% block twitter_seo_base %}{% if settings.website.SeoSettings.twitter_meta and self.is_canonical_page %}
+<meta name="twitter:card" content="{% block twitter_card %}summary{% endblock %}" />
+<meta name="twitter:title" content="{% if self.seo_title %}{{self.seo_title}}{% else %}{{self.title|titlesplit}}{% endif %}">
+<meta name="twitter:image" content="{% og_image self %}">{% if settings.website.SocialMediaSettings.twitter %}
+<meta name="twitter:site" content="{% block twitter_site %}@{{settings.website.SocialMediaSettings.twitter_handle}}{% endblock %}" />{% endif %}{% endif %}{% endblock %}
+{% block twitter_seo_extra %}{% endblock %}{% block frontend_assets %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/comment.css' %}">{% if settings.website.AnalyticsSettings.ga_track_button_clicks or self.has_form_include or self.get_content_walls %}
+<script type="text/javascript" src="{% versioned_static 'wagtailadmin/js/vendor/jquery-3.6.0.min.js' %}"></script>{% endif %}{% endblock %}
+{% block inline_styles %}{% endblock %}
+{% block favicon %}{% if settings.website.LayoutSettings.favicon %}{% image settings.website.LayoutSettings.favicon fill-120x120-c100 format-png as favicon_iphone %}{% image settings.website.LayoutSettings.favicon fill-180x180-c100 format-png as favicon_iphone_plus %}{% image settings.website.LayoutSettings.favicon fill-152x152-c100 format-png as favicon_ipad %}{% image settings.website.LayoutSettings.favicon fill-167x167-c100 format-png as favicon_ipad_pro %}
+<link rel="icon" type="image/png" href="{{ favicon_iphone_plus.url }}" />
+<link rel="apple-touch-icon" href="{{ favicon_iphone_plus.url }}">
+<link rel="apple-touch-icon" sizes="120x120" href="{{ favicon_iphone.url }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ favicon_iphone_plus.url }}">
+<link rel="apple-touch-icon" sizes="152x152" href="{{ favicon_ipad.url }}">
+<link rel="apple-touch-icon" sizes="167x167" href="{{ favicon_ipad_pro.url }}">{% endif %}{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" type="text/css" href="{% versioned_static 'website/css/website.css' %}">
+{% endblock %}
+</head>
+<body class="d-flex flex-column h-100 website-{% if self.content_type.model %}{{self.content_type.model}}{% else %}{{request.path|stripslash}}{% endif %}" id="page-{% if self.id %}{{self.id}}{% else %}{{request.path|stripslash}}{% endif %}">
+
+    {% wagtailuserbar %}
+
+    {% block header %}{% endblock %}
+
+    {% block container %}{% endblock %}
+    {% block messages %}
+        {% if messages %}
+            {% for message in messages %}
+                <div id="bsalerts" class="alert alert-{{ message.tags|map_to_bootstrap_alert }} m-2" role="alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endblock %}
+
+    {% block content %}
+
+    {% block contentpage_body %}
+    {% include_block self.body with settings=settings %}
+    {% endblock %}
+
+    {% block indexpage_body %}{% endblock %}
+
+    {% endblock %}
+
+    <div id="content-walls">
+        {% block content_walls %}
+            {% for content_wall in content_walls %}
+                {% include_block content_wall with settings=settings %}
+            {% endfor %}
+        {% endblock %}
+    </div>
+
+    </div>
+    </div>
+    </div>
+
+    {% block footer %}{% endblock %}
+
+    {% block required_scripts %}{% endblock %}
+
+    {% if settings.website.AnalyticsSettings.ga_track_button_clicks %}
+    <script type="text/javascript">
+    if(typeof track_clicks !== 'undefined' && track_clicks) {
+        $('a').on('click', function(){
+            gtag_data = {
+                "event_category": "Link",
+                "event_label": $(this).text().trim().substring(0, 30)
+            };
+            if ($(this).data('ga-event-category')) {
+                gtag_data['event_category'] = $(this).data('ga-event-category');
+            }
+            if ($(this).data('ga-event-label')) {
+                gtag_data['event_label'] = $(this).data('ga-event-label');
+            }
+            gtag('event', 'click', gtag_data);
+        });
+    }
+    </script>
+    {% endif %}
+</body>
+</html>

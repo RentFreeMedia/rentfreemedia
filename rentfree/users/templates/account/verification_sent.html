@@ -1,0 +1,12 @@
+{% extends "account/base.html" %}
+
+{% load i18n account website_tags %}
+
+{% block head_title %}{% trans "Verify Your E-mail Address" %}{% endblock %}
+
+{% block content %}
+<h2>{% trans "Verify Your E-mail Address" %}</h2>
+
+<p>{% blocktrans %}We have sent an e-mail to you for verification. Follow the link provided to finalize the signup process. Please {% endblocktrans %}<a href="mailto:{{ 'EMAIL_ADDR'|django_settings }}">{% trans "contact us" %}</a> if you do not receive the email in a few minutes.</p>
+
+{% endblock %}

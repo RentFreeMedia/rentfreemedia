@@ -1,0 +1,31 @@
+{% load comment_tags %}
+{% load i18n %}
+<section id="comments" class="{% block comment_section_cls %}my-5 mx-1{% endblock comment_section_cls %}">
+    <script>window.CSRF_TOKEN = "{{ csrf_token }}"</script>
+    <div class="{% block header_div_cls %}border-bottom border-secondary mb-4{% endblock header_div_cls %}">
+        <strong class="{% block header_title_cls %}bb{% endblock header_title_cls %}"><span
+                class="js-comment-number">{% get_comments_count model_object user %}</span><span
+                class="comment-translatable"> {% trans "Comments" %}</span></strong>
+        {% if is_subscription_allowed %}
+            <span class="{% block follow_icon_wrapper_cls %}float-end{% endblock follow_icon_wrapper_cls %}">{% include 'comment/follow/follow.html' with model_object=model_object btnId=0 %}</span>
+        {% endif %}
+    </div>
+    {% block comment_messages %}
+        {% include "comment/comments/messages.html" %}
+    {% endblock comment_messages %}
+    <div class="js-comment comment mb-5">
+        {% trans 'comment on this post...' as parent_placeholder %}
+        {% include 'comment/comments/create_comment.html' with placeholder=parent_placeholder comment=None %}
+    </div>
+    <div class="mt-5">
+        {% trans 'reply to this comment...' as child_placeholder %}
+        {% for comment in comments %}
+            {% include 'comment/comments/parent_comment.html' with placeholder=child_placeholder %}
+        {% endfor %}
+    </div>
+    {% if comments.paginator.num_pages > 1 %}
+        {% block pagination %}
+            {% include 'comment/comments/pagination.html' with active_btn='bg-success' text_style='text-success' li_cls='page-item rounded mx-1' %}
+        {% endblock pagination %}
+    {% endif %}
+</section>

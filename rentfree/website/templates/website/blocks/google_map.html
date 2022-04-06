@@ -1,0 +1,8 @@
+{% load wagtailcore_tags wagtailsettings_tags website_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+<div class="embed-responsive embed-responsive-16by9{% if self.settings.custom_css_class %} {{self.settings.custom_css_class}}{% endif %}"{% if self.custom_css_id %} id="{{self.settings.custom_css_id}}"{% endif %}>
+    {% if self.place_id %}
+        <iframe class="embed-responsive-item" width="100%" style="border:0" src="https://www.google.com/maps/embed/v1/place?q=place_id:{{ self.place_id }}&zoom={{ self.map_zoom_level }}&key={{ settings.GoogleApiSettings.google_maps_api_key}}" allowfullscreen></iframe>
+    {% else %}
+        <iframe class="embed-responsive-item" width="100%" style="border:0" src="https://maps.google.com/maps?q={{ self.search|urlencode }}&output=embed" allowfullscreen></iframe>
+    {% endif %}
+</div>

@@ -1,0 +1,16 @@
+{% extends "website/pages/web_page.html" %}
+{% load website_tags %}
+
+{% block title %}{{request.resolver_match.url_name|titlesplit|title}}{% endblock %}
+
+{% block header %}
+<header>
+{% snippet_header %}
+</header>
+{% endblock %}
+
+{% block footer %}
+<footer class="footer mt-auto">
+{% snippet_footer %}
+</footer>
+{% endblock %}

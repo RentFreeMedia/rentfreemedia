@@ -1,0 +1,10 @@
+{% extends "payments/base.html" %}
+{% load i18n website_tags %}
+
+{% block title %}{% basefilename %}{% endblock %}
+
+{% block content %}
+    <h2>{% trans 'Card Change Canceled' %}</h2>
+    <br />
+    <p class="mb-4">{% trans 'Action canceled. No changes have been made to your account.' %}.</p>
+{% endblock %}

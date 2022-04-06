@@ -1,0 +1,11 @@
+{% extends "payments/base.html" %}
+{% load i18n account website_tags %}
+
+{% block title %}{% basefilename %}{% endblock %}
+
+{% block content %}
+    <h2>{% trans 'Unsubscribe' %}</h2>
+    <br />
+    <p>{% trans 'Success! Your subscription will cancel at the end of this billing period. Until then your access to the premium content you have already paid for will remain active. We hope to see you subscribe again in the future.' %}</p>
+    <p class="mb-4">{% trans 'If you experience any difficulties, please ' %}<a href="mailto:{{ 'EMAIL_ADDR'|django_settings }}">{% trans 'contact us' %}</a>.</p>
+{% endblock %}

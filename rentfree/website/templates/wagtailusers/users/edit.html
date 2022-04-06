@@ -1,0 +1,14 @@
+{% extends "wagtailusers/users/edit.html" %}
+
+{% block extra_fields %}
+    {% include "wagtailadmin/shared/field_as_li.html" with field=form.user_name %}
+    {% include "wagtailadmin/shared/field_as_li.html" with field=form.url %}
+    {% include "wagtailadmin/shared/field_as_li.html" with field=form.is_mailsubscribed %}
+    {% include "wagtailadmin/shared/field_as_li.html" with field=form.is_smssubscribed %}
+    {% include "wagtailadmin/shared/field_as_li.html" with field=form.is_paysubscribed %}
+    {% include "wagtailadmin/shared/field_as_li.html" with field=form.is_newuserprofile %}
+    {% include "wagtailadmin/shared/field_as_li.html" with field=form.stripe_customer %}
+    {% include "wagtailadmin/shared/field_as_li.html" with field=form.stripe_subscription %}
+    {% include "wagtailadmin/shared/field_as_li.html" with field=form.stripe_paymentmethod %}
+    {% include "wagtailadmin/shared/field_as_li.html" with field=form.download_resets %}
+{% endblock extra_fields %}

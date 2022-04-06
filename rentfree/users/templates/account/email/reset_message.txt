@@ -1,0 +1,11 @@
+{% load account i18n wagtailcore_tags %}{% wagtail_site as current_site %}
+
+{% block content %}{% autoescape off %}
+<p>{% trans 'Hello' %} {% if first_name %}{{first_name}}{% elif user_name %}{{user_name}}{% else %}{{email}}{% endif %},</p>
+{% blocktrans with site_name=current_site.site_name site_domain=current_site.hostname %}
+
+<p>You're receiving this e-mail because an excessive number of downloads were requested from our servers using your premium content link(s).</p>
+
+<p>Please do not share them publicly.</p>
+
+<p>Your premium links have been reset, you will need to retrieve new ones from https://{{site_domain}}/subscribe/ and update your apps and devices with the new link(s).{% endblocktrans %}{% endautoescape %}{% endblock %}</p>

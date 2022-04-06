@@ -1,0 +1,13 @@
+{% load i18n %}
+{% load comment_tags %}    
+    <span class="js-like-number">{{ comment.likes }}</span>
+    {% url 'comment:react' pk=comment.id reaction='like' as like_url %}
+    <a title="{% trans "like" %}" class="{% block like_link_cls %}text-decoration-none {% endblock like_link_cls %}{% if user.is_authenticated %}js-comment-reaction" href="{{ like_url }}"{% else %}" href="{{ login_url }}/?next={{ request.build_absolute_uri }}"{% endif %}>
+        {% include "comment/reactions/like_icon.html" %}
+    </a>
+    <span class="ms-2 js-dislike-number">{{ comment.dislikes }}</span>
+    {% url 'comment:react' pk=comment.id reaction='dislike' as dislike_url %}
+    <a title="{% trans "dislike" %}" class="{% block dislike_link_cls %}text-decoration-none {% endblock dislike_link_cls %}{% if user.is_authenticated %}js-comment-reaction" href="{{ dislike_url }}"{% else %}" href="{{ login_url }}/?next={{ request.build_absolute_uri }}"{% endif %}>
+        {% include "comment/reactions/dislike_icon.html" %}
+    </a>
+

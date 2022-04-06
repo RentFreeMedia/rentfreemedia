@@ -1,0 +1,21 @@
+{% extends "account/base.html" %}
+{% load i18n website_tags %}
+
+{% block content %}
+<h2>
+  {% trans "Two-Factor Authentication" %}
+</h2>
+
+<form class="form" method="post" class="login">
+  {% csrf_token %}
+  <div class="form-group">
+  {{ form.non_field_errors }}
+  <div class="col my-1">{{ form.otp_token.label }}
+  <input type="text" name="otp_token" autofocus="autofocus" autocomplete="off" inputmode="numeric" required="" id="id_otp_token" class="form-control"></div>
+  <br />
+  <button class="my-4 primaryAction btn btn-primary" type="submit" role="button">
+    {% trans 'Authenticate' %}
+  </button>
+</div>
+</form>
+{% endblock %}

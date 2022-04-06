@@ -1,0 +1,26 @@
+{% extends "modeladmin/inspect.html" %}
+{% load website_tags %}
+
+{% block extra_css %}
+    {{ block.super }}
+    {{ view.media.css }}
+    <style>
+      .breadcrumb {
+        display: none;
+      }
+    </style>
+{% endblock %}
+
+{% block content %}
+{{ block.super }}
+<div class="nice-padding">
+  <div class="content-main">
+    <script type="text/javascript">
+      function calcHeight(iframeElement){
+        var the_height=  iframeElement.contentWindow.document.body.scrollHeight;
+        iframeElement.height=  the_height;
+      }
+    </script>
+    <iframe src="/django-admin/drip/drip/{{ instance.id }}/timeline/4/7/" onLoad="calcHeight(this);" width="100%" height="100%" frameborder="0"></iframe>
+  </div>
+  {% endblock %}

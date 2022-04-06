@@ -1,0 +1,4 @@
+{% load wagtailcore_tags wagtailsettings_tags website_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+<div{% if self.settings.css_class %} class="{{ self.settings.css_class }}"{% if self.settings.css_id %} id="{{ self.settings.css_id }}"{% endif %}{% endif %}>
+{% block block_render %}{% endblock %}
+</div>

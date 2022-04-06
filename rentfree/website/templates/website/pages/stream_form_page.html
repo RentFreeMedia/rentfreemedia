@@ -1,0 +1,125 @@
+{% extends "website/pages/web_page.html" %}
+
+{% load wagtailcore_tags website_tags wagtailadmin_tags %}
+
+{% block extra_head %}
+{% if not settings.website.AnalyticsSettings.ga_track_button_clicks %}
+<script type="text/javascript" src="{% versioned_static 'wagtailadmin/js/vendor/jquery-3.6.0.min.js' %}"></script>
+{% endif %}
+<script type="text/javascript" src="{% versioned_static 'website/js/modernizr.min.js' %}"></script>
+{% endblock %}
+
+{% block contentpage_body %}
+
+{{ block.super }}
+
+{% if self.form_live %}
+
+    {% block progress_bar %}
+    {% if steps|length > 1 %}
+    <div class="progress" style="height: 40px;">
+        {% with last_step=steps|last %}
+
+        {% widthratio step.index|add:"1" last_step.index|add:"1" 100 as width %}
+        <div class="progress-bar" role="progressbar" style="width: {{ width }}%;" aria-valuenow="{{ width }}" aria-valuemin="{{ width }}" aria-valuemax="100"><span>&nbsp;Step {{step.index|add:"1"}} / {{last_step.index|add:"1"}}   ({{ width }}%)</span></div>
+        {% endwith %}
+    </div>
+    <br />
+    {% endif %}
+    {% endblock %}
+
+    {% block stream_form %}
+    <form class="stream-form{% if self.form_css_class %} {{ self.form_css_class }}{% endif %}"{% if self.form_id %} id="{{ self.form_id }}"{% endif %} action="{% pageurl self %}" method="POST"{% if form|is_file_form %} enctype="multipart/form-data"{% endif %}>
+        {% csrf_token %}
+
+        {% block stream_form_fields %}
+
+            {% for item in markups_and_bound_fields %}
+                {% if item.1 == 'markup' %}
+                    {% include_block item.0 %}
+                {% else %}
+                    {% include 'website/includes/stream_forms/render_field.html' with block=item.2 field=item.0 %}
+                {% endif %}
+            {% endfor %}
+
+        {% endblock %}
+
+        {% block captcha %}
+            {% if self.spam_protection %}
+                {% include 'website/includes/form_honeypot.html' %}
+            {% endif %}
+        {% endblock %}
+
+        {% block stream_form_actions %}
+        <div class="form-group mt-5 row">
+            <div class="{{'horizontal_label_class'|bootstrap_settings}}"></div>
+            <div class="{{'horizontal_field_class'|bootstrap_settings}}">
+                {% if step != steps|first %}
+                <a href='{{self.url}}?step={{step.index}}' class="btn {{self.button_size}} {{self.button_style}} {{self.button_css_class}}">
+                    Previous
+                </a>
+                {% endif %}
+                <button type="submit" class="btn {{self.button_size}} {{self.button_style}} {{self.button_css_class}}">
+                    {% if steps|last == step %}{{ self.button_text }}{% else %}Next{% endif %}
+                </button>
+            </div>
+        </div>
+        {% endblock %}
+    </form>
+    {% endblock %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block required_scripts %}
+<script type="text/javascript">
+condition_triggered = function($source_field, $target_field) {
+    // custom logic for checkboxes since `.val()` always returns a fixed value, :checked property
+    // must be evaluated instead.
+    if ($source_field.prop("type") == "checkbox") {
+        $source_field.each(function() {
+            var $source_field = $(this);
+            $trigger_checkbox = $source_field.closest("[value='" + $target_field.data("condition-trigger-value") + "']");
+            if ($trigger_checkbox.length > 0) {
+                if($trigger_checkbox.prop("checked")) {
+                    $target_field.show();
+                }
+                else {
+                    $target_field.hide();
+                }
+            }
+        });
+    }
+    else {
+        if ($source_field.val().trim() == $target_field.data("condition-trigger-value").trim()) {
+            $target_field.show();
+        }
+        else {
+            $target_field.hide();
+        }
+    }
+}
+
+$("[data-condition-trigger-id]").each(function () {
+
+    // Get source/target fields from data attributes.
+    var $target_field = $(this);
+    var source_query = "#" + $(this).data("condition-trigger-id");
+    var $source_field = $(source_query + " input, " + source_query + " textarea, " + source_query + " select");
+    var source_field_name = $source_field.prop("name");
+
+    // Trigger initial state of input.
+    condition_triggered($source_field, $target_field);
+
+    // Watch change event for similarly named inputs within this form.
+    // It is necessary to watch based on name
+    // because selecting another radio button does not trigger a `change` for other radio buttons,
+    // it only triggers a change for the whole radio group (identified by "name").
+    var $form = $(this).closest("form");
+    $form.find("[name='" + source_field_name + "']").change(function () {
+        condition_triggered($(this), $target_field);
+    });
+});
+</script>
+
+{% endblock %}

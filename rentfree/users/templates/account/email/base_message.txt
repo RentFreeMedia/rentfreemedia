@@ -1,0 +1,8 @@
+{% load i18n wagtailcore_tags %}{% wagtail_site as current_site %}{% autoescape off %}{% blocktrans with site_name=current_site.site_name %}Hello from {{ site_name }}!{% endblocktrans %}
+
+{% block content %}{% endblock %}
+
+{% blocktrans with site_name=current_site.site_name site_domain=current_site.hostname %}Thank you for listening to {{ site_name }}!
+
+{{ site_domain }}{% endblocktrans %}
+{% endautoescape %}

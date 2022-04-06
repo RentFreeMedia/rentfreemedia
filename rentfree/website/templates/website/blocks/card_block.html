@@ -1,0 +1,18 @@
+{% load wagtailcore_tags wagtailimages_tags wagtailsettings_tags website_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+
+<div class="card mb-3{% if self.settings.custom_css_class %} {{self.settings.custom_css_class}}{% endif %}"{% if self.settings.custom_css_id %} id="{{self.settings.custom_css_id}}"{% endif %}>
+    {% if self.image %}
+    {% image self.image fill-900x600-c75 format-jpeg jpegquality-60 as card_img %}
+    <img class="card-img-top w-100" src="{{card_img.url}}" alt="{{card_img.title}}">
+    {% endif %}
+    <div class="card-body">
+        {% if self.title %}<h5 class="card-title">{{self.title}}</h5>{% endif %}
+        {% if self.subtitle %}<h6 class="card-subtitle mb-2 text-muted">{{self.subtitle}}</h6>{% endif %}
+        <div class="card-text">{{self.description}}</div>
+        {% for button in self.links %}
+        {% include_block button %}
+        {% endfor %}
+    </div>
+</div>
+
+

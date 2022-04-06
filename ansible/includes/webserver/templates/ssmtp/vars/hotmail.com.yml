@@ -1,0 +1,7 @@
+smtp_srv: "smtp.live.com"
+smtp_port: "587"
+smtp_tls: "Yes"
+smtp_starttls: "Yes"
+smtp_from: "{{ ansible_email_addr }}"
+smtp_user: "{{ ansible_email_addr }}"
+smtp_pass: "{{ ansible_email_pass }}"

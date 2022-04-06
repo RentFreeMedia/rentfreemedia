@@ -1,0 +1,17 @@
+{% load wagtailcore_tags wagtailsettings_tags wagtailimages_tags website_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+
+<div class="card mb-3">
+    {% if content.cover_image %}
+        {% image content.cover_image fill-900x600-c75 format-jpeg jpegquality-60 as cover_image %}
+        <a href="{{content.url}}" title="{{content.title}}"><img class="card-img-top" src="{{cover_image.url}}" alt="{{cover_image.title}}"></a>
+    {% endif %}
+    <div class="card-body">
+        <h5 class="card-title">{{content.title}}</h5>
+        <div class="card-subtitle mb-2 text-muted">{{content.get_pub_date}} {% if content.get_pub_date and content.get_author_name %} &bull; {% endif %} {{content.get_author_name}}</div>
+        <div class="card-subtitle mb-2 text-muted">{{content.caption}}</div>
+        {% if self.show_preview %}
+        <p class="card-text">{{content.body_preview}}</p>
+        {% endif %}
+        <a href="{{content.url}}" title="{{content.title}}">Read more &raquo;</a>
+    </div>
+</div>

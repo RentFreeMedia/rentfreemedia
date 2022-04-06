@@ -1,0 +1,225 @@
+    - name: Gathering facts...
+      ansible.builtin.setup:
+      register: rentfreedb_facts
+      delay: 5
+      retries: 3
+      until: rentfreedb_facts.ansible_facts
+
+    - name: Install PostgreSQL, s3cmd, ssmtp, logwatch, and various dependencies...
+      ansible.builtin.apt: 
+        name: "{{ item.value }}"
+        update_cache: True
+      delay: 5
+      retries: 3
+      register: rentfreedb_install
+      until: rentfreedb_install.failed == False
+      loop:
+        - { value: "postgresql" }
+        - { value: "s3cmd" }
+        - { value: "python3-psycopg2" }
+        - { value: "logwatch" }
+        - { value: "ssmtp" }
+
+    - name: Get installed PostgreSQL server version...
+      ansible.builtin.shell: "/bin/ls /etc/postgresql | awk '{print $1}'"
+      delay: 5
+      retries: 3
+      register: ansible_pgsqlver
+      until: ansible_pgsqlver.failed == False
+
+    - name: Get time zone...
+      ansible.builtin.command: "cat /etc/timezone"
+      delay: 5
+      retries: 3
+      register: ans_timezone
+      until: ans_timezone.failed == False
+
+    - name: Detected values are...
+      ansible.builtin.debug:
+        msg: "Server time zone: {{ ans_timezone.stdout }}, number of CPUs: {{ ansible_processor_vcpus }}, Memory in megabytes: {{ ansible_memtotal_mb }}, IP address: {{ ansible_default_ipv4.address }}, PostgreSQL version: {{ ansible_pgsqlver.stdout }}"
+
+    - name: Set PostgreSQL variables if number of server CPUs is more than 8...
+      ansible.builtin.include_vars: vars/large.yml
+      when: ansible_processor_vcpus >= 8
+
+    - name: Set PostgreSQL variables if number of server CPUs is between 4 and 8...
+      ansible.builtin.include_vars: vars/medium.yml
+      when: ansible_processor_vcpus >= 4 and ansible_processor_vcpus < 8
+
+    - name: Set PostgreSQL variables if number of server CPUs is less than 4...
+      ansible.builtin.include_vars: vars/small.yml
+      when: ansible_processor_vcpus < 4
+
+    - name: Set PostgreSQL config variables...
+      community.general.ini_file:
+        dest: "/etc/postgresql/{{ ansible_pgsqlver.stdout }}/main/postgresql.conf"
+        section: null
+        option: "{{ item.option }}"
+        value: "{{ item.value }}"
+        backup: "{{ true if index == 0 else false }}"
+        create: False
+      loop:
+        - { option: 'max_worker_processes', value: '{{ max_parallel_worker_cpus }}' }
+        - { option: 'max_parallel_workers', value: '{{ max_parallel_worker_cpus }}' }
+        - { option: 'max_parallel_workers_per_gather', value: '{{ max_parallel_gather_cpus }}' }
+        - { option: 'max_connections', value: '100' }
+        - { option: 'shared_buffers', value: '{{ (ansible_memtotal_mb|int * 0.25) | round | int }}MB' }
+        - { option: 'effective_cache_size', value: '{{ (ansible_memtotal_mb|int * 0.75) | round | int }}MB' }
+        - { option: 'maintenance_work_mem', value: '{{ ((ansible_memtotal_mb|int / 16) * 1024) | round | int }}kB' }
+        - { option: 'checkpoint_completion_target', value: '0.9' }
+        - { option: 'wal_buffers', value: '16MB' }
+        - { option: 'default_statistics_target', value: '100' }
+        - { option: 'random_page_cost', value: '1.1' }
+        - { option: 'effective_io_concurrency', value: '200' }
+        - { option: 'min_wal_size', value: '1GB' }
+        - { option: 'max_wal_size', value: '{{ (ansible_memtotal_mb|int / 1024) | round | int }}GB' }
+        - { option: 'work_mem', value: '{{ pgsql_work_mem }}kB' }
+        - { option: 'listen_addresses', value: "'localhost, {{ ansible_private_ip_addr }}'"}
+      loop_control:
+        index_var: index
+      register: postgresql_conf
+      delay: 5
+      retries: 3
+      until: postgresql_conf.failed == False
+
+    - name: Set max_parallel_maintenance_workers for PostgreSQL if server v11 or v12...
+      community.general.ini_file:
+        dest: "/etc/postgresql/{{ ansible_pgsqlver.stdout }}/main/postgresql.conf"
+        option: max_parallel_maintenance_workers
+        section: null
+        value: "{{ max_parallel_gather_cpus }}"
+        create: False
+      when: (ansible_pgsqlver.stdout == "11") or
+            (ansible_pgsqlver.stdout == "12") or
+            (ansible_pgsqlver.stdout == "13") or
+            (ansible_pgsqlver.stdout == "14")
+      register: postgresql_cpu_conf
+      delay: 5
+      retries: 3
+      until: postgresql_cpu_conf.failed == False
+
+    - name: Add VPC connection for PostgreSQL...
+      ansible.builtin.replace:
+        path: /etc/postgresql/{{ ansible_pgsqlver.stdout }}/main/pg_hba.conf
+        after: '# TYPE'
+        before: '# Allow replication'
+        regexp: '^(local\s*?)(all\s*?)(all\s*)(peer)$'
+        replace: 'host     webdb          webuser          192.168.1.0/24          md5'
+        backup: yes
+      register: postgresql_vpc_conf
+      delay: 5
+      retries: 3
+      until: postgresql_vpc_conf.failed == False
+
+    - name: Unset PostgreSQL parallel processing settings for servers with only one CPU, if server v11 or v12...
+      ansible.builtin.replace:
+        path: "/etc/postgresql/{{ ansible_pgsqlver.stdout }}/main/postgresql.conf"
+        after: "Asynchronous Behavior"
+        regexp: "{{ item.regexp }}"
+        replace: "{{ item.replace }}"
+      loop:
+        - { regexp: '^.*?max_worker_processes.*?$', replace: '#max_worker_processes = 8'}
+        - { regexp: '^.*?max_parallel_workers_per_gather.*?$', replace: '#max_parallel_workers_per_gather = 2'}
+        - { regexp: '^.*?max_parallel_workers.*?$', replace: '#max_parallel_workers = 8'}
+        - { regexp: '^.*?max_parallel_maintenance_workers.*?$', replace: '#max_parallel_maintenance_workers = 2'}
+      when: ansible_processor_vcpus < 2
+      register: postgresql_one_cpu_twelve_conf
+      delay: 5
+      retries: 3
+      until: postgresql_one_cpu_twelve_conf.failed == False
+
+    - name: Create required PostgreSQL users with a random password...
+      vars:
+        webdb_pass: "{{ lookup('password', '~/ansible-webuser-database-password.txt length=32 chars=ascii_letters,digits') }}"
+      become: True
+      become_user: postgres
+      community.general.postgresql_user:
+        login_unix_socket: /var/run/postgresql/
+        db: "{{ item.name }}"
+        name: "{{ item.user }}"
+        password: "{{ item.password }}"
+        priv: "{{ item.privs }}"
+        role_attr_flags: "{{ item.flags }}"
+      loop:
+        - { name: 'postgres', user: 'webuser', password: "{{ webdb_pass }}", privs: "CONNECT", flags: "NOINHERIT" }
+      register: pgsql_user
+      delay: 5
+      retries: 3
+      until: pgsql_user.failed == False
+      no_log: True
+
+    - name: Create PostgreSQL website database...
+      become: True
+      become_user: postgres
+      community.general.postgresql_db:
+        login_unix_socket: /var/run/postgresql/
+        name: webdb
+        encoding: UTF-8
+        owner: webuser
+        template: "template0"
+      register: webdb_create
+      delay: 5
+      retries: 3
+      until: webdb_create.failed == False
+
+    - name: Restart PostgreSQL...
+      ansible.builtin.systemd:
+        name: postgresql
+        state: restarted
+      delay: 5
+      retries: 3
+      register: postgresql_restart
+      until: postgresql_restart.failed == False
+
+    - name: Create s3cmd config file for root user on database droplet for database backups...
+      ansible.builtin.template:
+        src: templates/s3cfg.j2
+        dest: /root/.s3cfg
+        owner: root
+        group: sudo
+        mode: 0600
+      register: postgresql_s3cmd_setup
+      delay: 5
+      retries: 3
+      until: postgresql_s3cmd_setup.failed == False
+      no_log: True
+
+    - name: Create daily database backup script on database droplet...
+      ansible.builtin.template:
+        src: templates/pg_backup.j2
+        dest: /usr/local/bin/pg_backup
+        owner: root
+        group: root
+        mode: 0750
+      register: postgresql_backup_script
+      delay: 5
+      retries: 3
+      until: postgresql_backup_script.failed == False
+      no_log: True
+
+    - name: Create daily database backup cron job on database droplet...
+      ansible.builtin.cron:
+        name: database_backup
+        minute: "5"
+        hour: "6"
+        user: root
+        job: "/usr/local/bin/pg_backup >/dev/null 2>&1"
+      register: postgresql_cron_backup
+      delay: 5
+      retries: 3
+      until: postgresql_cron_backup.failed == False
+      no_log: True
+
+    - name: Set up Logwatch cron job...
+      ansible.builtin.lineinfile: 
+        dest: /etc/cron.daily/00logwatch
+        regexp: "^/usr/sbin/logwatch"
+        line: "/usr/sbin/logwatch --mailto {{ ansible_email_addr }}"
+        state: present 
+        create: True
+      register: logwatch_config
+      delay: 5
+      retries: 3
+      until: logwatch_config.failed == False
+      no_log: True
+

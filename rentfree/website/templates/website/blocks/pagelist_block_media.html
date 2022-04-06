@@ -1,0 +1,25 @@
+{% extends 'website/blocks/base_block.html' %}
+{% load wagtailcore_tags wagtailsettings_tags wagtailimages_tags website_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+
+{% block block_render %}
+
+    {% for page in pages %}
+    {% with page.specific as content %}
+    <div class="media{% if self.settings.custom_css_class %} {{ self.settings.custom_css_class }}{% endif %}"{% if self.settings.custom_id %} id="{{ self.settings.custom_id }}"{% endif %}>
+        {% if content.cover_image %}
+            {% image content.cover_image fill-150x100-c75 format-jpeg jpegquality-60 as cover_image %}
+            <a href="{{content.url}}"><img class="mr-3" src="{{cover_image.url}}" alt="{{cover_image.title}}"></a>
+        {% endif %}
+        <div class="media-body">
+            <h5 class="mt-0"><a href="{{content.url}}">{{content.title}}</a></h5>
+            <div class="mb-2 text-muted">{{content.get_pub_date}}</div>
+            <div class="mb-2 text-muted">{{content.caption}}</div>
+            {% if self.show_preview %}
+            <p>{{content.body_preview}}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+
+{% endblock %}

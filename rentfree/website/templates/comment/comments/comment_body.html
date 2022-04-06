@@ -1,0 +1,15 @@
+{% load comment_tags %}
+<div class="row">
+    {% if has_valid_profile %}
+        <div class="{% block image_wrapper_cls %}col-2 col-md-1{% endblock image_wrapper_cls %}">
+            <img class="{% block image_cls %}w-100{% endblock image_cls %}"
+                src="{% get_img_path comment %}" alt="{% get_username_for_comment comment %}">
+        </div>
+    {% endif %}
+    {% include 'comment/comments/comment_content.html' with comment=comment %}
+    {% if comment.user != user %}
+        <div class="{% block three_dots_wrapper_cls %}col-1 text-right{% endblock three_dots_wrapper_cls %}">
+            {% include 'comment/comments/three_dots_menu.html' %}
+        </div>
+    {% endif %}
+</div>

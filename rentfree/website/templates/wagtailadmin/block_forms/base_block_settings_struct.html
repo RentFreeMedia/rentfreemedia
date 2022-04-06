@@ -1,0 +1,35 @@
+{% load wagtailadmin_tags  %}
+
+<div class="{{ classname }} website-collapsible collapsed">
+    <button type="button" class="button button-small button-primary">
+        <i class="icon icon-cog" aria-hidden="true"></i> Settings
+    </button>
+    <div class="website-collapsible-target" style="display:none;">
+    {% for child in children.values %}
+        <div class="field {% if child.block.required %}required{% endif %}" data-contentpath="{{ child.block.name }}">
+            {% if child.block.label %}
+                <label class="field__label" {% if child.id_for_label %}for="{{ child.id_for_label }}"{% endif %}>{{ child.block.label }}</label>
+            {% endif %}
+            {{ child.render_form }}
+        </div>
+    {% endfor %}
+    </div>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function(){
+    $(document).on('click', '.website-collapsible button', function() {
+        var $target = $(this).parent().find('.website-collapsible-target');
+
+        if ($(this).parent().hasClass('collapsed')) {
+            $target.show('slow', function() {
+                $(this).parent().removeClass('collapsed');
+            });
+        } else {
+            $target.hide('slow', function() {
+                $(this).parent().addClass('collapsed');               
+            });
+        }
+    });
+});
+</script>

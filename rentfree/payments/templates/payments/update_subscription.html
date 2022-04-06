@@ -1,0 +1,194 @@
+{% extends "payments/base.html" %}
+{% load i18n payments_tags website_tags static wagtailcore_tags %}
+{% wagtail_site as current_site %}
+
+{% block title %}{% basefilename %}{% endblock %}
+
+{% block frontend_assets %}
+{{block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'payments/css/stripe.checkout.css' %}">
+{% endblock %}
+
+{% block content %}
+{% if request.user.stripe_subscription and request.user.stripe_subscription.status == 'active' %}
+<h2 class="mb-4">{% trans "Your Premium Content Links" %}</h2>
+<hr>
+<p>{% blocktrans %}Links to the premium content you are subscribed to are shown below. DO NOT SHARE THEM. They are bound to your account, and enable password-less login to your premium content. You can import them to any device or application you choose such as feed readers or podcast players to access your premium content.{% endblocktrans %}</p>
+{% if podcasts %}
+    {% for podcast in podcasts %}
+<div class="form-group row mb-4">
+  <h5 class="mb-3 pl-4">{{podcast.parent_page.rss_title}}</h5>
+    <div class="col-9">
+      <input class="form-control mt-2" type="text" value="{{current_site.root_url}}{{podcast.parent_page.url}}premiumfeed/{{uid}}/{{token}}/" readonly="readonly">
+    </div>
+    <div class="col-3">
+      <button class="btn btn-primary rounded-circle mx-2" onclick="copyField(this)"><i class="bi-clipboard2-fill" role="img" aria-hidden="true" style="color:var(--bs-dark);font-size:24px;"></i></button>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="col-9 mb-4">
+    <h5 class="mb-3 pl-4">No Episodes to Show</h5>
+    <p>
+      <input class="form-control" type="text" value="No premium episodes yet" readonly="readonly">
+    </p>
+</div>
+{% endif %}
+{% if articles %}
+  {% for article in articles %}
+  <div class="form-group row">
+  <h5 class="mb-3 pl-4">{{article.parent_page.rss_title}}</h5>
+    <div class="col-9">
+      <input class="form-control mt-2" type="text" value="{{current_site.root_url}}{{article.parent_page.url}}premiumfeed/{{uid}}/{{token}}/" readonly="readonly">
+    </div>
+    <div class="col-3">
+      <button class="btn btn-primary rounded-circle mx-2" onclick="copyField(this)"><i class="bi-clipboard2-fill" role="img" aria-hidden="true" style="color:var(--bs-dark);font-size:24px;"></i></button>
+    </div>
+</div>
+  {% endfor %}
+{% else %}
+<div class="col-9">
+  <h5 class="mb-3 pl-4">No Articles to Show</h5>
+    <p>
+    <input class="form-control" type="text" value="No premium articles yet" readonly="readonly">
+    </p>
+</div>
+{% endif %}
+<h2 class="mb-4">{% trans "Your Payment Method Details" %}</h2>
+<hr>
+<p>{% blocktrans %}Your current default payment method is shown below, if you need to change it, submit the change button and you'll be redirected to our payment processor to update your payment method details.{% endblocktrans %}</p>
+<form id="subscribe-card-change-form">
+  {% csrf_token %}
+  <div class="form-group">
+    <div class="col">
+      <div class="row">
+        <div class="card col col-lg-6 my-4 mx-auto">
+          <div class="d-flex justify-content-between mx-4 mb-2 mt-4">
+          <p class="text-start d-inline-block">Card:</p>
+          <p id="card-brand" class="float-right text-end d-inline-block">{% if request.user.stripe_paymentmethod.card.brand %}{{request.user.stripe_paymentmethod.card.brand|title}}{% endif %}</p>
+          </div>
+          <div class="d-flex justify-content-between mx-4 my-2">
+          <p class="text-start d-inline-block">Number:</p>
+          <p id="card-number" class="float-right text-end d-inline-block">{% if request.user.stripe_paymentmethod.card.last4 %}* * * * * * * * * * * * {{request.user.stripe_paymentmethod.card.last4}}{% endif %}</p>
+          </div>
+          <div class="d-flex justify-content-between mx-4 my-2">
+          <p class="text-start d-inline-block">Expiration:</p>
+          <p id="card-exp" class="float-right text-end d-inline-block">{% if request.user.stripe_paymentmethod.card and request.user.stripe_paymentmethod.card.exp_year %}{{request.user.stripe_paymentmethod.card.exp_month}} / {{request.user.stripe_paymentmethod.card.exp_year}}{% endif %}</p>
+          </div>
+          <input type="hidden" name="prod_tier" value="prodtier" id="prodtier"></input>
+          <div class="mx-auto mb-4"><button type="submit" id="card-submit" class="btn btn-block btn-primary"><div class="spinner-border spinner-border-sm m-1 text-light d-none" id="card-spinner" role="status"></div><span id="card-button-text">Change</span></button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endif %}
+<h2 class="mb-4">{% trans "Your Subscription Details" %}</h2>
+<hr>
+<p>{% blocktrans %}Your current subscription is higlighted below. You can modify your subscription plan here by submitting a different choice if you wish to upgrade or downgrade. If you change to a different subscription tier, any credits or pro-rated upgrade charges will be applied to your next monthly billing total.{% endblocktrans %}</p>
+<form id="subscribe-price-change-form" action="/subscribe-price-change/" method="POST">
+  {% csrf_token %}
+ <div class="form-group row">
+  <div class="col">
+   <div class="row justify-content-center">
+    {% for product in products %}
+     {% for price in product.plan_set.all %}
+     <div class="col col-lg-3 pb-4">
+    <div class="card mb-4 h-100">
+     <div class="card-body{% if user.stripe_subscription.cancel_at_period_end %}"{% elif request.user.is_paysubscribed|add:"0" == product.metadata.tier|add:"0" %} active"{% else %}"{% endif %} id="{{product.name|slugify}}-card" role="button" onclick="planSelect('{{product.name|slugify}}-card', '{{product.name}}', '{{price.human_readable_price}}', '{{product.metadata|get_tier}}')">
+      <h4 class="card-title text-center"><label for="{{product.name}}">{{product.name}}</label></h4>
+      <p class="text-center">{{price.human_readable_price}}</p>
+      <p class="card-text">{{product.description}}</p>
+    </div>
+    </div>
+    </div>
+    {% endfor %}
+  {% endfor %}
+  <div class="col col-lg-3 pb-4">
+  <div class="card mb-4 h-100">
+    <div class="card-body{% if user.stripe_subscription.cancel_at_period_end %} active"{% else %}"{% endif %} id="cancel-subscription-card" role="button" onclick="planSelect('cancel-subscription-card', '{% if user.stripe_subscription.cancel_at_period_end %}{% for product in products %}{% if request.user.is_paysubscribed|add:"0" == product.metadata.tier|add:"0" %}Cancel {{product.name}}{% endif %}{% endfor %}{% else %}{% for product in products %}{% if request.user.is_paysubscribed|add:"0" == product.metadata.tier|add:"0" %}Cancel {{product.name}}{% endif %}{% endfor %}{% endif %}', '$0.00', '0')">
+      <h4 class="card-title text-center"><label for="Cancel Subscription">Cancel</label></h4>
+      <p class="text-center">$0.00</p>
+      <p class="card-text">Cancel your subscription.</p>
+    </div>
+  </div>
+  </div>
+</div>
+</div>
+</div>
+{% if user.stripe_subscription %}
+<div class="card col col-lg-9 mx-auto mb-4">
+ <div class="d-flex justify-content-between mx-4 mb-2 mt-4">
+  <p class="text-start d-inline-block">Plan:</p>
+  <p id="price-name" class="float-right text-end d-inline-block">{% if user.stripe_subscription.cancel_at_period_end %}Cancel {{user.stripe_subscription.plan.product.name}}{% else %}{{user.stripe_subscription.plan.product.name}}{% endif %}</p>
+  </div>
+  <div class="d-flex justify-content-between mx-4 my-2">
+  <p class="text-start d-inline-block">Price:</p>
+  <p id="price-amount" class="float-right text-end d-inline-block">{% if user.stripe_subscription.plan.human_readable_price %}{{user.stripe_subscription.plan.human_readable_price}}{% endif %}</p>
+  </div>
+  <div class="d-flex justify-content-between mx-4 my-2">
+  <p class="text-start d-inline-block">Discount/Coupon:</p>
+  <p id="discount-amount" class="float-right text-end d-inline-block">{% if user.stripe_subscription.discount.coupon %}{% if user.stripe_subscription.discount.coupon.percent_off %}{{user.stripe_subscription.discount.coupon.percent_off|add:"0"}}% Off{% endif %}{% endif %}</p>
+  </div>
+  <div class="d-flex justify-content-between mx-4 my-2">
+  <p class="text-start d-inline-block">Last Action:</p>
+  <p id="price-status" class="float-right text-end d-inline-block">{% if user.stripe_subscription.cancel_at_period_end %}Cancels on {{user.stripe_subscription.current_period_end|date:"M d, Y"}}{% else %}{% if user.stripe_subscription.customer.charges.latest.human_readable_amount %}Billed {{user.stripe_subscription.customer.charges.latest.human_readable_amount}} on {{user.stripe_subscription.customer.charges.latest.invoice.created|date:"M d, Y"}}{% endif %}{% endif %}</p>
+  </div>
+  <div class="d-flex justify-content-between mx-4 my-2">
+  <input type="hidden" name="prod_tier" value="prodtier" id="product-tier"></input>
+</div>
+<div class="mx-auto mb-4"><button type="submit" id="price-submit" class="btn btn-block btn-primary"><span id="price-button-text">Current</span></button></div></div>
+{% endif %}
+</form>
+{% endblock %}
+
+{% block required_scripts %}
+<script src="https://js.stripe.com/v3/"></script>
+<script src="{% static 'payments/js/stripe.change.js' %}" crossorigin="anonymous"></script>
+<script type="text/javascript">
+  document.getElementById('price-submit').disabled = true;
+  var planSelect = function(elid, name, price, prodtier) {
+
+    var pln = document.getElementById('price-name');
+    var prce = document.getElementById('price-amount');
+    var prod_tier = document.getElementById('product-tier');
+    var element = document.getElementById(elid);
+    var actives = document.getElementsByClassName('active');
+    var default_card = document.getElementById('{% if user.stripe_subscription.cancel_at_period_end %}cancel-subscription-card{% endif %}{% for product in products %}{% if request.user.is_paysubscribed|add:"0" == product.metadata.tier|add:"0" and not user.stripe_subscription.cancel_at_period_end %}{{product.name|slugify}}-card{% endif %}{% endfor %}')
+
+    pln.innerHTML = name;
+    prce.innerHTML = price;
+    prod_tier.value = prodtier;
+
+    if (element != default_card && default_card == 'cancel-subscription-card') {
+      document.getElementById('price-submit').disabled = false;
+      document.getElementById('price-button-text').innerHTML = 'Change';
+      document.getElementById('discount-amount').innerHTML = '';
+      document.getElementById('price-status').innerHTML = '';
+    } else if (element != default_card && default_card != 'cancel-subscription-card') {
+      document.getElementById('price-submit').disabled = false;
+      document.getElementById('price-button-text').innerHTML = 'Change';
+      document.getElementById('discount-amount').innerHTML = '<i><small>Coupons transfer with tier changes.</small></i>';
+      document.getElementById('price-status').innerHTML = '';
+    } else {
+      document.getElementById('price-submit').disabled = true;
+      document.getElementById('price-button-text').innerHTML = 'Current';
+      document.getElementById('discount-amount').innerHTML = '{% if user.stripe_subscription.discount.coupon and user.stripe_subscription.discount.coupon.valid %}{% if user.stripe_subscription.discount.coupon.percent_off %}{{user.stripe_subscription.discount.coupon.percent_off|add:"0"}}% Off{% endif %}{% endif %}';
+      document.getElementById('price-status').innerHTML = '{% if user.stripe_subscription.customer.charges.latest.human_readable_amount %}Billed {{user.stripe_subscription.customer.charges.latest.human_readable_amount}} on {{user.stripe_subscription.customer.charges.latest.invoice.created|date:"M d, Y"}}{% endif %}';
+    };
+    while(actives.length > 0){
+      actives[0].classList.remove('active');
+    }
+    element.classList.add('active');
+  };
+</script>
+
+<script type="text/javascript">
+function copyField(event) {
+  /* Get the text field */
+  var field = event.previousSibling.parentElement.previousSibling.previousSibling.querySelector('input');
+  field.select();
+  document.execCommand("copy");
+}
+</script>
+{% endblock %}

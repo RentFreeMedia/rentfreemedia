@@ -1,0 +1,18 @@
+{% if allowed_flags and is_subscription_allowed and comment.is_parent %}
+    <div class="js-three-dots three-dots-wrapper">
+        <div class="three-dots"></div>
+        <div class="three-dots"></div>
+        <div class="three-dots"></div>
+    </div>
+    <ul class="js-three-dots-menu three-dots-dropdown d-none">
+        <li>
+            {% include 'comment/follow/follow.html' with model_object=comment btnId=comment.id %}
+        </li>
+    </ul>
+{% else %}
+    {% if comment.is_parent and is_subscription_allowed %}
+        <div class="ms-3">
+            {% include 'comment/follow/follow.html' with model_object=comment btnId=comment.id %}
+        </div>
+    {% endif %}
+{% endif %}

@@ -1,0 +1,7 @@
+{% load wagtailcore_tags wagtailsettings_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+
+<div{% if self.settings.custom_id %} id="{{self.settings.custom_id}}"{% endif %} class="col{% if self.settings.column_breakpoint %}-{{self.settings.column_breakpoint}}{% endif %}{% if self.column_size %}-{{ self.column_size }}{% endif %}{% if self.settings.custom_css_class %} {{self.settings.custom_css_class}}{% endif %}">
+      {% for block in self.content %}
+      {% include_block block with %}
+      {% endfor %}
+</div>

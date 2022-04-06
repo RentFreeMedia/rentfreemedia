@@ -1,0 +1,8 @@
+{% load wagtailcore_tags website_tags wagtailimages_tags %}
+<header>
+    <div{% if self.page_header.custom_id %} id="{{self.page_header.custom_id}}"{% endif %}{% if self.page_header.custom_css_class %} class="{{self.page_header.custom_css_class}}"{% endif %}>
+        {% for item in self.page_header.content %}
+            {% include_block item with format=format settings=settings %}
+        {% endfor %}
+    </div>
+</header>

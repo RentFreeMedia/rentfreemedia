@@ -1,0 +1,2 @@
+{% load wagtailcore_tags wagtailsettings_tags website_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+{% include_block self.content.content %}

@@ -1,0 +1,37 @@
+{% load wagtailcore_tags wagtailsettings_tags website_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+{% block block_render %}
+<div{% if self.settings.custom_css_class %} class="{{self.settings.custom_css_class}}"{% endif %}{% if self.settings.custom_css_id %} id="{{self.settings.custom_css_id}}"{% endif %}>
+{% if page.uploaded_media %}
+{% if page.uploaded_media.type == 'audio' %}
+<audio id="player">
+    <source src="{{ MEDIA_PREFIX }}{{ page.uploaded_media.url }}" type="{{ page.uploaded_media_type }}" />
+</audio>
+{% elif page.uploaded_media.type == 'video' %}
+<video id="player" class="media-player w-100" controls playsinline{% if page.uploaded_media.thumbnail %} data-poster="{{ MEDIA_PREFIX }}{{ page.uploaded_media.thumbnail }}">{% else %}">{% endif %}
+    <source src="{{ MEDIA_PREFIX }}{{ page.uploaded_media.url }}" type="{{ page.uploaded_media_type }}" />
+</video>
+{% endif %}
+{% endif %}
+{% if page.remote_media %}
+{% if page.remote_media_type == 'audio/x-m4a' or  page.remote_media_type == 'audio/mpeg' or page.remote_media_type == 'audio/ogg' or page.remote_media_type == 'audio/wav' %}
+<audio id="player" controls>
+    <source src="{{ page.remote_media }}" type="{{ page.remote_media_type }}" />
+</audio>
+{% elif page.remote_media_type == 'video/x-m4v' or  page.remote_media_type == 'video/ogg' or page.remote_media_type == 'video/webm' or page.remote_media_type == 'video/3gpp' %}
+<video id="player" class="w-100" controls{% if page.remote_media and page.remote_media.thumbnail %} data-poster="{{page.remote_media.thumbnail}}"{% endif %}>
+    <source src="{{ page.remote_media }}" type="{{ page.remote_media_type }}" />
+</video>
+{% elif page.remote_media_type == 'youtube' and page.remote_media|youtubeid %}
+<div class="plyr__video-embed" id="player">
+    <iframe src="https://www.youtube.com/embed/{{ page.remote_media|youtubeid }}?origin=https://{{ current_site.hostname }}&amp;iv_load_policy=3&amp;modestbranding=1&amp;playsinline=1&amp;showinfo=0&amp;rel=0&amp;enablejsapi=1" allowfullscreen allowtransparency class="ytiframe embed-responsive-item">
+    </iframe>
+</div>
+{% elif page.remote_media_type == 'vimeo' and page.remote_media|vimeoid %}
+<div class="plyr__video-embed" id="player">
+    <iframe src="https://player.vimeo.com/video/{{ page.remote_media|vimeoid }}?loop=false&amp;byline=false&amp;portrait=false&amp;title=false&amp;speed=true&amp;transparent=0&amp;gesture=media" allowfullscreen allowtransparency class="vmiframe embed-responsive-item">
+    </iframe>
+</div>
+{% endif %}
+{% endif %}
+</div>
+{% endblock %}

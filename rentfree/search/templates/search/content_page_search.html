@@ -1,0 +1,23 @@
+{% load website_tags wagtailsettings_tags wagtailimages_tags %}{% get_settings %}
+{% if not forloop.first %}
+<hr>{% endif %}
+<div class="row mt-4">
+    {% if settings.website.LayoutSettings.show_search_images %}
+    <div class="col-6 col-md-3">
+        <a href="{{page.url}}" title="{{page.title}}">
+        {% if page.content_type.model_class in pagetypes %}<small class="ml-3 badge badge-secondary">{{page.search_name}}</small>{% endif %}
+        {% if page.cover_image %}
+            {% image page.cover_image fill-750x750-c100 format-jpeg jpegquality-60 class="img-fluid rounded" %}
+        {% else %}
+            <p class="p-5 lead text-center bg-secondary text-white-50">{{page.title}}</p>
+        {% endif %}
+        </a>
+    </div>
+    {% endif %}
+    <div class="col-6 col-md-9">
+        <h3><a href="{{page.url}}">{{page.title}}</a></h3>
+        {% if settings.website.LayoutSettings.show_search_captions and page.caption %}<p class="lead">{{page.caption}}</p>{% endif %}
+        {% if settings.website.LayoutSettings.show_search_meta and page.get_pub_date %}<p>{{page.get_pub_date}}</p>{% endif %}
+        {% if settings.website.LayoutSettings.show_search_preview and page.body_preview %}<p class="d-none d-md-block">{{page.body_preview|strip_markup}}</p>{% endif %}
+    </div>
+</div>

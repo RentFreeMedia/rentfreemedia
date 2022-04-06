@@ -1,0 +1,12 @@
+{% load i18n %}
+{% load comment_tags %}
+<span title="{% if user|has_flagged:comment %}{% trans "Remove flag" %}{% else %}{% trans "Report comment" %}{% endif %}">
+{% block flag_img_icon %}
+<svg class="comment-flag-icon float-end me-2 mb-3 {% if user|has_flagged:comment %}user-has-flagged{% else %}user-has-not-flagged{% endif %}"
+     xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+     stroke="{% block flag_icon_color %}#427297{% endblock flag_icon_color %}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m2.99352,18.63039s1,-1 4,-1s5,2 8,2s4,-1 4,-1l0,-12s-1,1 -4,1s-5,-2 -8,-2s-4,1 -4,1l0,12z"/>
+  <line y2="16.00627" x2="2.99352" y1="23.00627" x1="2.99352"/>
+</svg>
+{% endblock flag_img_icon %}
+</span>

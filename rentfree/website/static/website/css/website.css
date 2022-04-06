@@ -1,0 +1,21 @@
+#comments .bb {
+    padding-bottom: 2px;
+    border-bottom: 3px solid var(--bs-primary);
+}
+#comments textarea:focus, #comments textarea:hover {
+    border: 1px solid var(--bs-primary);
+    outline: none;
+}
+#comments .user-has-followed {
+    stroke: var(--bs-primary);
+}
+
+#bsalerts {
+    animation: fadeinout 4s linear 1 forwards;
+}
+
+@keyframes fadeinout {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 0; }
+}

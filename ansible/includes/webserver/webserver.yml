@@ -1,0 +1,768 @@
+    - name: Gathering facts...
+      ansible.builtin.setup:
+      register: rentfreeweb_facts
+      delay: 5
+      retries: 3
+      until: rentfreeweb_facts.ansible_facts
+
+    - name: Check to see if dhparam.pem has been generated...
+      ansible.builtin.stat: 
+        path: /etc/ssl/dhparam.pem
+      register: dhparam_present
+
+    - ansible.builtin.debug:
+        msg: |
+          "This package generates a new 2048 bit SSL key to make website SSL keys with for increased security. This process can take a long time, so the task will run asynchronously and wait for itself to complete before finishing the server configuration by generating new SSL keys. If the process fails, you will have an invalid (and insecure) /etc/ssl/dhparam.pem file on your server. Delete it manually before running this installation script again, by logging into your web server's console and typing the command 'rm -f /etc/ssl/dhparam.pem'"
+      register: dhparam_info
+      when: dhparam_present.stat.exists == False
+
+    - name: sleep for 10 seconds to let the user read the above message...
+      ansible.builtin.wait_for:
+        timeout: 10
+      delegate_to: localhost
+      register: dhparam_message_status
+      when: dhparam_present.stat.exists == False
+
+    - name: Generate new dhparam key asynchronously...
+      community.crypto.openssl_dhparam:
+        path: /etc/ssl/dhparam.pem
+        force: False
+        size: 2048
+        mode: 0644
+        owner: root
+      register: dhparam_status
+      async: 86400
+      poll: 0
+      delay: 5
+      retries: 3
+      until: dhparam_status.failed == False
+      when: dhparam_present.stat.exists == False
+      no_log: True
+
+    - name: Update remote server hosts file...
+      vars:
+        domain_name: "{{ ansible_do_hostname }}"
+        host_name: "{{ ansible_do_hostname | regex_replace('\\..*?$') }}"
+      ansible.builtin.template:
+        src: templates/etc/etc_hosts.j2
+        dest: /etc/hosts
+        backup: True
+      register: hosts_result
+      delay: 5
+      retries: 3
+      until: hosts_result.failed == False
+
+    - name: Update remote server hostname file...
+      ansible.builtin.template:
+        src: templates/etc/etc_hostname.j2
+        dest: /etc/hostname
+        backup: True
+      register: hostname_result
+      delay: 5
+      retries: 3
+      until: hostname_result.failed == False
+
+    - name: Install Nginx, PGBouncer, ssmtp, logwatch and various dependencies...
+      ansible.builtin.apt: 
+        name: "{{ item.value }}"
+        update_cache: True
+      register: webserver_install
+      delay: 5
+      retries: 3
+      until: webserver_install.failed == False
+      loop:
+        - { value: "nginx" }
+        - { value: "pgbouncer" }
+        - { value: "ssmtp" }
+        - { value: "logwatch" }
+        - { value: "python3-pip" }
+        - { value: "python3-cryptography" }
+        - { value: "python3-pillow" }
+        - { value: "python3-pygments" }
+        - { value: "python3-psycopg2" }
+        - { value: "python3-lxml" }
+        - { value: "python3-cffi" }
+        - { value: "python3-boto3" }
+
+    - name: Install Certbot...
+      community.general.snap:
+        classic: True
+        name: certbot
+      register: install_certbot
+      delay: 5
+      retries: 3
+      until: install_certbot.failed == False
+
+    - name: Authorize Certbot snap to run as root...
+      ansible.builtin.command:
+        cmd: "/usr/bin/snap set certbot trust-plugin-with-root=ok"
+      register: authorize_certbot
+      delay: 5
+      retries: 3
+      until: authorize_certbot.failed == False
+
+    - name: Install Certbot DNS plugin for Digital Ocean...
+      community.general.snap:
+        name: certbot-dns-digitalocean
+      register: install_certbot_dns
+      delay: 5
+      retries: 3
+      until: install_certbot_dns.failed == False
+
+    - name: Prompt for shell password for the rentfree user...
+      ansible.builtin.pause:
+        prompt: "\nEnter a password for admin actions on the server's terminal.\n
+                This can be a simple password that you will remember, it is only\n
+                used as an extra security check when performing administrative\n
+                tasks via the command line.\n\n"
+        echo: True
+      register: rentfree_shellpass
+      no_log: True
+      
+    - name: Create website user...
+      ansible.builtin.user:
+        append: True
+        name: rentfree
+        shell: /bin/bash
+        groups: ["sudo", "postgres"]
+        uid: 1000
+        password: "{{ rentfree_shellpass.user_input | password_hash('sha512') }}"
+        update_password: on_create
+      register: create_user_rentfree
+      delay: 5
+      retries: 3
+      until: create_user_rentfree.failed == False
+      no_log: True
+
+    - name: Create website user local bin directory...
+      ansible.builtin.file:
+        path: /home/rentfree/.local/bin
+        state: directory
+        owner: rentfree
+        group: rentfree
+        mode: 0750
+      register: rentfree_bindir
+      delay: 5
+      retries: 3
+      until: rentfree_bindir.failed == False
+
+    - name: Create website user ssh config directory...
+      ansible.builtin.file:
+        path: /home/rentfree/.ssh
+        state: directory
+        owner: rentfree
+        group: rentfree
+        mode: 0700
+      register: rentfree_sshdir
+      delay: 5
+      retries: 3
+      until: rentfree_sshdir.failed == False
+
+    - name: Create rentfree log file directory...
+      ansible.builtin.file:
+        path: /home/rentfree/logs
+        state: directory
+        owner: rentfree
+        group: rentfree
+        mode: 0750
+      register: rentfree_logdir
+      delay: 5
+      retries: 3
+      until: rentfree_logdir.failed == False
+
+    - name: Create rentfree logrotate rules...
+      ansible.builtin.template:
+        src: templates/logrotate/gunicorn.j2
+        dest: /etc/logrotate.d/gunicorn
+        owner: root
+        group: root
+        mode: 0644
+      register: rentfree_logrotate
+      delay: 5
+      retries: 3
+      until: rentfree_logrotate.failed == False
+
+    - name: Set authorized key for user rentfree user...
+      vars:
+        pubkey: "{{ ansible_do_hostname.split('.', 1)[0] }}.pub"
+      ansible.posix.authorized_key:
+        user: rentfree
+        state: present
+        key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/' + pubkey) }}"
+      register: rentfree_authorizessh
+      delay: 5
+      retries: 3
+      until: rentfree_authorizessh.failed == False
+      no_log: True
+
+    - name: Add rentfree host info to my local SSH configuration...
+      become: False
+      local_action: ansible.builtin.shell echo "\nHost rentfree\n    hostname {{ ansible_host }}\n    user rentfree\n    identityfile {{ ansible_ssh_private_key_file }}\n" >> ~/.ssh/config
+      register: rentfree_authorized_key
+
+    - name: Enable long-running services for website user...
+      ansible.builtin.shell: "/bin/loginctl enable-linger rentfree"
+      register: loginctl_linger
+      delay: 5
+      retries: 3
+      until: loginctl_linger.failed == False
+      
+    - name: Check to see if SSL certificates for our domain already exist...
+      ansible.builtin.stat:
+        path: "/etc/letsencrypt/live/{{ ansible_do_hostname }}"
+      register: certbot_check
+      check_mode: True
+      delay: 5
+      retries: 3
+      until: certbot_check.failed == False
+
+    - name: Create letsencrypt directory if it doesn't exist...
+      ansible.builtin.file:
+        path: /etc/letsencrypt
+        state: directory
+        owner: root
+        group: sudo
+        mode: 0644
+      register: certbot_etcfolder
+      delay: 5
+      retries: 3
+      until: certbot_etcfolder.failed == False
+      when: certbot_check.stat.exists == False
+
+    - name: Create Certbot ini file...
+      ansible.builtin.template:
+        src: templates/certbot/certbot_ini.j2
+        dest: /etc/letsencrypt/cli.ini
+        owner: root
+        group: sudo
+        mode: 0600
+      register: certbot_ini
+      delay: 5
+      retries: 3
+      until: certbot_ini.failed == False
+      when: certbot_check.stat.exists == False
+      no_log: True
+
+    - name: Create Certbot ini file for Digital Ocean DNS authentication...
+      ansible.builtin.template:
+        src: templates/certbot/digital_ocean_ini.j2
+        dest: /etc/letsencrypt/digital_ocean.ini
+        owner: root
+        group: sudo
+        mode: 0600
+      register: certbot_digital_ocean_ini
+      delay: 5
+      retries: 3
+      until: certbot_digital_ocean_ini.failed == False
+      when: certbot_check.stat.exists == False
+      no_log: True
+
+    - name: Set Nginx configuration...
+      ansible.builtin.template:
+        src: "{{ item.source }}"
+        dest: "{{ item.dest }}"
+        backup: "{{ true if index == 0 else false }}"
+      loop:
+        - { source: 'templates/nginx/nginx_main_conf.j2', dest: '/etc/nginx/nginx.conf' }
+        - { source: 'templates/nginx/header_conf.j2', dest: '/etc/nginx/header.conf' }
+        - { source: 'templates/nginx/proxy_conf.j2', dest: '/etc/nginx/proxy.conf' }
+        - { source: 'templates/nginx/optimization_conf.j2', dest: '/etc/nginx/optimization.conf' }
+        - { source: 'templates/nginx/ssl_conf.j2', dest: '/etc/nginx/ssl.conf' }
+        - { source: 'templates/nginx/sites-available/main_site_conf.j2', dest: '/etc/nginx/sites-available/main_site.conf' }
+      register: nginx_init
+      delay: 5
+      retries: 3
+      until: nginx_init.failed == False
+      loop_control:
+        index_var: index
+
+    - name: Create Nginx cache directory...
+      ansible.builtin.file:
+        path: /var/cache/nginx
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: 0644
+      register: nginx_cache
+      delay: 5
+      retries: 3
+      until: nginx_cache.failed == False
+      
+    - set_fact:
+        ansible_maildomain: "{{ ansible_email_addr | regex_replace('[A-Za-z0-9._%+-]+@') }}"
+
+    - name: Prompt for SMTP username if provided email address requires it...
+      ansible.builtin.pause:
+        prompt: "\nEnter your mail account's SMTP username\n
+                ex: AKIA123456789ABC if you use AWS SES\n 
+                to send email.\n\n"
+        echo: True
+      register: rentfree_smtp_user
+      when: (ansible_maildomain != "gmail.com") and
+            (ansible_maildomain != "yahoo.com") and
+            (ansible_maildomain != "hotmail.com") and
+            (ansible_maildomain != "outlook.com") and
+            (ansible_maildomain != "aol.com") and
+            (ansible_maildomain != "mac.com") and
+            (ansible_maildomain != "me.com") and
+            (ansible_maildomain != "icloud.com")
+
+    - name: Prompt for SMTP address if provided email address requires it...
+      ansible.builtin.pause:
+        prompt: "\nEnter your mail account's SMTP server address\n
+                ex: email-smtp.us-east-1.amazonaws.com\n\n"
+        echo: True
+      register: rentfree_smtp
+      when: (ansible_maildomain != "gmail.com") and
+            (ansible_maildomain != "yahoo.com") and
+            (ansible_maildomain != "hotmail.com") and
+            (ansible_maildomain != "outlook.com") and
+            (ansible_maildomain != "aol.com") and
+            (ansible_maildomain != "mac.com") and
+            (ansible_maildomain != "me.com") and
+            (ansible_maildomain != "icloud.com")
+
+    - name: Prompt for SMTP port if provided email address requires it...
+      ansible.builtin.pause:
+        prompt: "\nEnter your mail account's SMTP port\n
+                ex: 587\n\n"
+        echo: True
+      register: rentfree_port
+      when: (ansible_maildomain != "gmail.com") and
+            (ansible_maildomain != "yahoo.com") and
+            (ansible_maildomain != "hotmail.com") and
+            (ansible_maildomain != "outlook.com") and
+            (ansible_maildomain != "aol.com") and
+            (ansible_maildomain != "mac.com") and
+            (ansible_maildomain != "me.com") and
+            (ansible_maildomain != "icloud.com")
+
+    - name: Set SMTP variables for admin email (if hotmail, aol, gmail, etc)...
+      include_vars: "templates/ssmtp/vars/{{ ansible_maildomain }}.yml"
+      when: (ansible_maildomain == "gmail.com") or
+            (ansible_maildomain == "yahoo.com") or
+            (ansible_maildomain == "hotmail.com") or
+            (ansible_maildomain == "outlook.com") or
+            (ansible_maildomain == "aol.com") or
+            (ansible_maildomain == "mac.com") or
+            (ansible_maildomain == "me.com") or
+            (ansible_maildomain == "icloud.com")
+
+    - name: Set SMTP variables for admin email (if custom/other domain)...
+      include_vars: "templates/ssmtp/vars/other.com.yml"
+      when: (ansible_maildomain != "gmail.com") and
+            (ansible_maildomain != "yahoo.com") and
+            (ansible_maildomain != "hotmail.com") and
+            (ansible_maildomain != "outlook.com") and
+            (ansible_maildomain != "aol.com") and
+            (ansible_maildomain != "mac.com") and
+            (ansible_maildomain != "me.com") and
+            (ansible_maildomain != "icloud.com")
+
+    - name: Set up ssmtp config from template...
+      ansible.builtin.template:
+        src: templates/ssmtp/ssmtp_conf.j2
+        dest: /etc/ssmtp/ssmtp.conf
+        backup: True
+        mode: 0640
+        owner: root
+      no_log: True
+      register: ssmtp_template
+      retries: 3
+      delay: 5
+      until: ssmtp_template.failed == False
+
+    - name: Add email aliases for root and default...
+      ansible.builtin.template:
+        src: templates/ssmtp/revaliases.j2
+        dest: /etc/ssmtp/revaliases
+        backup: True
+        mode: 0640
+        owner: root
+      no_log: True
+      retries: 3
+      delay: 5
+      register: ssmtp_aliases
+      until: ssmtp_aliases.failed == False
+
+    - name: Set up Logwatch cron job...
+      ansible.builtin.lineinfile: 
+        dest: /etc/cron.daily/00logwatch
+        regexp: "^/usr/sbin/logwatch"
+        line: "/usr/sbin/logwatch --output mail --mailto {{ ansible_email_addr }}"
+        state: present 
+        create: True
+      no_log: True
+
+    - name: Wait until the dhparam key is computed before continuing...
+      ansible.builtin.async_status:
+        jid: "{{ dhparam_status.ansible_job_id }}"
+      register: dhparam_result
+      delay: 30
+      retries: 2880
+      until: dhparam_result.finished
+      when: dhparam_status.changed == True
+
+    - name: Set up PGBouncer config from template...
+      vars:
+        webdb_pass: "{{ lookup('password', '~/ansible-webuser-database-password.txt length=32 chars=ascii_letters,digits') }}"
+      ansible.builtin.template:
+        src: templates/pgbouncer/pgbouncer_ini.j2
+        dest: /etc/pgbouncer/pgbouncer.ini
+        backup: True
+        mode: 0640
+        owner: postgres
+      no_log: True
+      register: pgbouncer_ini_template
+      retries: 3
+      delay: 5
+      until: pgbouncer_ini_template.failed == False
+
+    - name: Set up PGBouncer user config from template...
+      vars:
+        pgbdb_pass: "{{ lookup('password', '~/ansible-pgbuser-database-password.txt length=32 chars=ascii_letters,digits') }}"
+      ansible.builtin.template:
+        src: templates/pgbouncer/userlist_txt.j2
+        dest: /etc/pgbouncer/userlist.txt
+        backup: True
+        mode: 0640
+        owner: postgres
+      no_log: True
+      retries: 3
+      delay: 5
+      register: pgbouncer_user_template
+      until: pgbouncer_user_template.failed == False
+
+    - name: Symlink main site config from Nginx sites-available directory into the sites-enabled directory...
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/main_site.conf
+        dest: /etc/nginx/sites-enabled/main_site.conf
+        owner: root
+        group: root
+        state: link
+      register: nginx_sites_enabled
+
+    - name: Add webserver host info to my local SSH configuration...
+      become: False
+      local_action: ansible.builtin.shell echo "\nHost {{ ansible_do_webserver_name }}\n    hostname {{ ansible_host }}\n    user root\n    identityfile {{ ansible_ssh_private_key_file }}\n" >> ~/.ssh/config
+      register: rentfree_dosshwebconfig
+
+    - name: Add database server host info to my local SSH configuration...
+      become: False
+      local_action: ansible.builtin.shell echo "\nHost {{ ansible_dbserver_name }}\n    hostname {{ ansible_dbserver_host }}\n    user root\n    port 22\n    identityfile {{ ansible_ssh_private_key_file }}\n    ProxyCommand ssh -q -W %h:%p {{ ansible_do_webserver_name }}" >> ~/.ssh/config
+      register: rentfree_dosshwebconfig
+
+    - name: Sync outgoing mail aliases across the two servers...
+      ansible.builtin.template:
+        src: templates/ssmtp/revaliases.j2
+        dest: /etc/ssmtp/revaliases
+        backup: True
+        mode: 0640
+        owner: root
+      delegate_to: rentfree-db
+      no_log: True
+      retries: 3
+      delay: 5
+      register: ssmtp_aliases_db
+      until: ssmtp_aliases_db.failed == False
+
+    - name: Sync outgoing mail configs across the two servers...
+      ansible.builtin.template:
+        src: templates/ssmtp/ssmtp_conf.j2
+        dest: /etc/ssmtp/ssmtp.conf
+        backup: True
+        mode: 0640
+        owner: root
+      delegate_to: rentfree-db
+      no_log: True
+      retries: 3
+      delay: 5
+      register: ssmtp_config_db
+      until: ssmtp_config_db.failed == False
+
+    - name: Check to see if rentfree files exist...
+      ansible.builtin.stat:
+        path: /home/rentfree/rentfreemedia.tar.gz
+      retries: 3
+      delay: 5
+      register: rentfree_build_files
+      until: rentfree_build_files.failed == False
+
+    - name: Get rentfree build files from github...
+      ansible.builtin.uri:
+        dest: /home/rentfree/rentfreemedia.tar.gz
+        url: https://github.com/rentfreemedia/rentfreemedia/tarball/main
+      become: True
+      become_user: rentfree
+      retries: 3
+      delay: 5
+      register: rentfree_build_download
+      until: rentfree_build_download.failed == False
+      when: rentfree_build_files.stat.exists == False
+
+    - name: Unzip rentfree build files...
+      ansible.builtin.unarchive:
+        remote_src: True
+        src: /home/rentfree/rentfreemedia.tar.gz
+        dest: /home/rentfree
+        extra_opts: 
+        - --strip-components=1
+      become: True
+      become_user: rentfree
+      retries: 3
+      delay: 5
+      register: rentfree_build_unzip
+      until: rentfree_build_unzip.failed == False
+      when: rentfree_build_files.stat.exists == False
+
+    - name: Remove default site from Nginx...
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      retries: 3
+      delay: 5
+      register: rentfree_remove_nginx_default
+      until: rentfree_remove_nginx_default.failed == False
+
+    - name: Remove dummy env file from the server...
+      ansible.builtin.file:
+        path: /home/rentfree/rentfree/env
+        state: absent
+      retries: 3
+      delay: 5
+      register: rentfree_remove_env
+      until: rentfree_remove_env.failed == False
+
+    - name: Remove the ansible folder from the files unzipped from the rentfree repo...
+      ansible.builtin.command: "/bin/rm -rf /home/rentfree/ansible/"
+      become: True
+      become_user: rentfree
+      args:
+        chdir: /home/rentfree
+      retries: 3
+      delay: 5
+      register: rm_ansible_files
+      until: rm_ansible_files.failed == False
+
+    - name: Enter Stripe public key...
+      ansible.builtin.pause:
+        prompt: "\nI need your Stripe sandbox (testing mode) public key for the\n
+                initial database migration. Stop here and set up a Stripe account\n
+                if you haven't done so yet. When you're ready, enter the key here.\n
+                It's the one that looks like:\n\n
+                'pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'\n\n
+                Enter your Stripe test public key:\n\n"
+        echo: True
+      register: stripe_test_publickey
+      no_log: True
+
+    - name: Enter Stripe secret key...
+      ansible.builtin.pause:
+        prompt: "\nI also need your Stripe sandbox (testing mode) secret key for the\n
+                initial database migration. Enter the key here. It's the one that looks like:\n\n
+                'sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'\n\n
+                Enter your Stripe test secret key:\n\n"
+        echo: True
+      register: stripe_test_secretkey
+      no_log: True
+
+    - name: Enter Stripe webhook secret...
+      ansible.builtin.pause:
+        prompt: "\nI also need your Stripe sandbox (testing mode) webhook secret\n
+                for the initial database migration. It's the one that looks like:\n\n
+                'whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'\n\n
+                Enter your Stripe webhook secret:\n\n"
+        echo: True
+      register: stripe_test_whkey
+      no_log: True
+
+    - name: Create Django settings .env file on the web server...
+      ansible.builtin.template:
+        src: templates/rentfree/env.j2
+        dest: /home/rentfree/rentfree/.env
+        backup: True
+        mode: 0640
+        owner: rentfree
+        group: rentfree
+      register: rentfree_dotenv
+      delay: 5
+      retries: 3
+      until: rentfree_dotenv.failed == False
+      no_log: True
+
+    - name: Create website user systemd unit directory...
+      ansible.builtin.file:
+        path: /home/rentfree/.config/systemd/user
+        state: directory
+        owner: rentfree
+        group: rentfree
+        mode: 0750
+      retries: 3
+      delay: 5
+      register: user_systemd
+      until: user_systemd.failed == False
+
+    - name: Install rentfree required libraries...
+      ansible.builtin.command: "/usr/bin/pip3 install -r /home/rentfree/rentfree/requirements_ansible.txt --user"
+      become: True
+      become_user: rentfree
+      args:
+        chdir: /home/rentfree/rentfree
+      retries: 3
+      delay: 5
+      register: pip_install
+      until: pip_install.failed == False
+
+    - name: Collect static files...
+      ansible.builtin.command: "/usr/bin/python3 manage.py collectstatic --noinput"
+      become: True
+      become_user: rentfree
+      args:
+        chdir: /home/rentfree/rentfree
+      retries: 3
+      delay: 5
+      register: django_collectstatic
+      until: django_collectstatic.failed == False
+      no_log: True
+
+    - name: Restart PGBouncer with new config...
+      ansible.builtin.systemd:
+        name: pgbouncer
+        state: restarted
+      register: pgbouncer_restart
+      delay: 5
+      retries: 3
+      until: pgbouncer_restart.failed == False
+
+    - name: Create initial rentfree database migrations...
+      ansible.builtin.command: "/usr/bin/python3 manage.py makemigrations --noinput"
+      become: True
+      become_user: rentfree
+      args:
+        chdir: /home/rentfree/rentfree
+      retries: 3
+      delay: 5
+      register: django_make_migrate
+      until: django_make_migrate.failed == False
+
+    - name: Create initial rentfree database data...
+      ansible.builtin.command: "/usr/bin/python3 manage.py migrate --noinput"
+      become: True
+      become_user: rentfree
+      args:
+        chdir: /home/rentfree/rentfree
+      retries: 3
+      delay: 5
+      register: django_migrate
+      until: django_migrate.failed == False
+
+    - name: Create superuser for rentfree database...
+      ansible.builtin.command: "/usr/bin/python3 manage.py createsuperuser --noinput"
+      become: True
+      become_user: rentfree
+      args:
+        chdir: /home/rentfree/rentfree
+      retries: 3
+      delay: 5
+      register: django_createadmin
+      until: django_createadmin.failed == False
+      no_log: True
+
+    - name: Update indexes for rentfree database...
+      ansible.builtin.command: "/usr/bin/python3 manage.py update_index"
+      become: True
+      become_user: rentfree
+      args:
+        chdir: /home/rentfree/rentfree
+      retries: 3
+      delay: 5
+      register: django_indexes
+      until: django_indexes.failed == False
+
+    - name: Create PATH entry in rentfree user crontab...
+      ansible.builtin.cron:
+        name: PATH
+        env: yes
+        job: /home/rentfree/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+
+    - name: Create a cron job to send rentfree queued email every minute...
+      ansible.builtin.cron:
+        name: rentfree_mail
+        user: rentfree
+        job: "cd $HOME/rentfree && /usr/bin/python3 manage.py send_queued_mail > /dev/null 2>&1"
+      retries: 3
+      delay: 5
+      register: create_mail_cron
+      until: create_mail_cron.failed == False
+
+    - name: Create a cron job to publish scheduled pages every hour...
+      ansible.builtin.cron:
+        name: rentfree_publish
+        user: rentfree
+        job: "cd $HOME/rentfree && /usr/bin/python3 manage.py publish_scheduled_pages > /dev/null 2>&1"
+        minute: 7
+      retries: 3
+      delay: 5
+      register: create_publish_cron
+      until: create_publish_cron.failed == False
+
+    - name: Create a cron job to send rentfree drip mail once a week...
+      ansible.builtin.cron:
+        name: rentfree_dripmail
+        user: rentfree
+        job: "cd $HOME/rentfree && /usr/bin/python3 manage.py send_drips > /dev/null 2>&1"
+        weekday: 4
+        hour: 16
+      retries: 3
+      delay: 5
+      register: create_mail_cron
+      until: create_mail_cron.failed == False
+
+    - name: Create a cron job to rebuild the rentfree search index once a month...
+      ansible.builtin.cron:
+        name: rentfree_index
+        user: rentfree
+        job: "cd $HOME/rentfree && /usr/bin/python3 manage.py update_index > /dev/null 2>&1"
+        day: 5
+        hour: 7
+      retries: 3
+      delay: 5
+      register: create_mail_cron
+      until: create_mail_cron.failed == False
+
+    - name: Create a cron job to purge the 30 day sent email queue every night...
+      ansible.builtin.cron:
+        name: rentfree_clean_mail
+        user: rentfree
+        job: "cd $HOME/rentfree && /usr/bin/python3 manage.py cleanup_mail -d 30 --delete-attachments > /dev/null 2>&1"
+        hour: 1
+        minute: 9
+      retries: 3
+      delay: 5
+      register: create_clean_mail_cron
+      until: create_clean_mail_cron.failed == False
+
+    - name: Enable systemd tempfiles for rentfree user...
+      ansible.builtin.command: "/usr/bin/systemctl --user enable systemd-tmpfiles-setup.service systemd-tmpfiles-clean.timer"
+      become: True
+      become_user: rentfree
+      args:
+        chdir: /home/rentfree
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/1000"
+      register: rentfree_systemd_temp
+      retries: 3
+      delay: 5
+      until: rentfree_systemd_temp.failed == False
+
+    - name: Create rentfree gunicorn server systemd unit file...
+      ansible.builtin.template:
+        src: templates/systemd/gunicorn_service.j2
+        dest: /home/rentfree/.config/systemd/user/gunicorn.service
+        backup: True
+        mode: 0644
+        owner: rentfree
+      retries: 3
+      delay: 5
+      register: rentfree_gunicorn_unit
+      until: rentfree_gunicorn_unit.failed == False

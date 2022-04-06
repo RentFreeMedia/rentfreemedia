@@ -1,0 +1,8 @@
+{% extends "website/pages/web_page_notitle.html" %}{% load wagtailsettings_tags %}{% get_settings use_default_site=True %}
+{% block og_seo_extra %}{% if self.get_children %}{% for child in self.get_children.specific %}{% if child.is_podcast_index %}
+<link type="application/rss+xml" rel="alternate" title="{{ child.rss_title }}" href="{{ child.full_url }}rss/" />{% endif %}{% if child.is_article_index %}
+<link type="application/rss+xml" rel="alternate" title="{{ child.rss_title }}" href="{{ child.full_url }}rss/" />{% endif %}{% endfor %}{% endif %}{% endblock %}
+{% if settings.website.SeoSettings.struct_meta and self.is_canonical_page %}{% block schema %}
+<script type="application/ld+json">
+{% include "website/includes/struct_data_org.json" with page=self %}
+</script>{% endblock %}{% endif %}

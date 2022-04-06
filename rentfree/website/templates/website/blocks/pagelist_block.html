@@ -1,0 +1,16 @@
+{% extends 'website/blocks/base_block.html' %}
+{% load wagtailcore_tags wagtailsettings_tags website_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+
+{% block block_render %}
+
+<ul style="list-style-position:inside;">
+    {% for page in pages %}
+    {% with page=page.specific %}
+    <li>
+        <a href="{% pageurl page %}">{{page.title}} {% if self.show_preview %}<small class="text-muted">– {{page.body_preview}}</small>{% endif %}</a>
+    </li>
+    {% endwith %}
+    {% endfor %}
+</ul>
+
+{% endblock %}

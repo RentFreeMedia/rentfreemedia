@@ -1,0 +1,8 @@
+.active {
+    border-color: var(--bs-secondary) !important;
+    background-color: var(--bs-primary);
+    color: var(--bs-dark) !important;
+    box-shadow: 0 2px 5px rgb(0 0 0 / 15%), 0 2px 5px rgb(0 0 0 / 20%);
+} .active h1, .active h2, .active h3, .active h4, .active h5, .active h6 {
+        color: #303030;
+}

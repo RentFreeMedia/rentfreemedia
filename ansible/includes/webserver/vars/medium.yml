@@ -1,0 +1,3 @@
+max_parallel_worker_cpus: "{{ (ansible_processor_vcpus|int / 2) | round | int }}"
+max_parallel_gather_cpus: "{{ (max_parallel_worker_cpus|int / 2) | round | int }}"
+pgsql_work_mem: "{{ (((((ansible_memtotal_mb|int * 256) / 100) * ansible_processor_vcpus|int) * (ansible_memtotal_mb|int / 1024)) | round | int }}"

@@ -1,0 +1,91 @@
+{% extends "website/pages/web_page.html" %}
+
+{% load wagtailcore_tags website_tags wagtailadmin_tags django_bootstrap5 wagtailsettings_tags %}
+
+{% block extra_head %}
+{% if not settings.website.AnalyticsSettings.ga_track_button_clicks %}
+<script type="text/javascript" src="{% versioned_static 'wagtailadmin/js/vendor/jquery-3.6.0.min.js' %}"></script>
+{% endif %}
+<script type="text/javascript" src="{% versioned_static 'website/js/modernizr.min.js' %}"></script>
+{% endblock %}
+
+{% block contentpage_body %}
+
+{{ block.super }}
+
+{% if self.form_live %}
+<form class='{{ self.form_css_class }}' id='{{ self.form_id }}' action="{% pageurl self %}" method="POST" {% if form|is_file_form %}enctype="multipart/form-data"{% endif %}>
+    {% csrf_token %}
+
+    {% bootstrap_form form layout='horizontal' %}
+
+    {% block captcha %}
+        {% if self.spam_protection %}
+            {% include 'website/includes/form_honeypot.html' %}
+        {% endif %}
+    {% endblock %}
+
+    <div class="form-group mt-5 row">
+        <div class="{{'horizontal_label_class'|bootstrap_settings}}"></div>
+        <div class="{{'horizontal_field_class'|bootstrap_settings}}">
+            <button type="submit" class="btn {{self.button_size}} {{self.button_style}} {{self.button_css_class}}">
+                {{ self.button_text }}
+            </button>
+        </div>
+    </div>
+</form>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block required_scripts %}
+<script type="text/javascript">
+if ( $('form').length > 0) {
+    load_script(libs.modernizr, function() {
+        if ( (!Modernizr.inputtypes.date || !Modernizr.inputtypes.time) && $("input[type='date'], input[type='time']").length > 0) {
+            load_script(libs.pickerbase, function() {
+                $(document).trigger("base-picker-loaded");
+            });
+        }
+        if(!Modernizr.inputtypes.date && $("input[type='date']").length > 0) {
+            $(document).on("base-picker-loaded", function() {
+                load_script(libs.pickadate, function() {
+                    // Show date picker
+                    $("input[type='date']").pickadate({
+                        format: 'mm/dd/yyyy',
+                        selectMonths: true,
+                        selectYears: true
+                    });
+                });
+            });
+        }
+        if(!Modernizr.inputtypes.time && $("[type='time']").length > 0) {
+            $(document).on("base-picker-loaded", function() {
+                load_script(libs.pickatime, function() {
+                    // Show time picker
+                    $("input[type='time']").pickatime({
+                        format: 'h:i A',
+                        interval: 15
+                    });
+                });
+            });
+        }
+        if (!Modernizr.inputtypes['datetime-local'] && $("input[type='datetime-local']").length > 0) {
+            load_script(libs.moment, function() {
+                // Show formatting help text
+                $('.datetime-help').show();
+                // Format input on blur
+                $("[type='datetime-local']").blur(function() {
+                    var clean = $.trim($(this).val());
+                    if (clean != '') {
+                        clean = moment(clean).format("L LT");
+                        $(this).val(clean);
+                    }
+                });
+            });
+        }
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% load i18n %}
+{% url 'comment:flag' pk=comment.id  as flag_url %}
+{% if user.is_authenticated %}
+<button class="js-comment-flag btn btn-link w-100" data-url="{{ flag_url }}">
+    {% include "comment/flags/flag_icon.html" %}
+</button>
+{% else %}
+<a href="{{ login_url }}/?next={{ request.build_absolute_uri }}" title="{% trans "flag" %}">
+    {% include "comment/flags/flag_icon.html" %}
+</a>
+{% endif %}

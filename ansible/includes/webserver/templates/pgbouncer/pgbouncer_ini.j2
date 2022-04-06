@@ -1,0 +1,14 @@
+[databases]
+{{ ansible_dbserver_name }} = host={{ ansible_dbserver_host }} port=5432 dbname=webdb user=webuser password={{ webdb_pass }}
+
+[pgbouncer]
+listen_addr = *
+listen_port = 6432
+auth_type = md5
+auth_file = /etc/pgbouncer/userlist.txt
+pool_mode = transaction
+max_client_conn = 100
+default_pool_size = 20
+unix_socket_dir = /run/postgresql
+logfile = /var/log/postgresql/pgbouncer.log
+pidfile = /var/run/postgresql/pgbouncer.pid

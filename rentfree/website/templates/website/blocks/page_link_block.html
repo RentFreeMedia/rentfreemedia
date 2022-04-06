@@ -1,0 +1,4 @@
+{% extends 'website/blocks/base_link_block.html' %}
+{% load wagtailcore_tags wagtailsettings_tags website_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+
+{% block url %}{% if value.page %}{% pageurl value.page %}{% endif %}{% endblock %}

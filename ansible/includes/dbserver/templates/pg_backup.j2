@@ -1,0 +1,12 @@
+#!/bin/sh
+
+/usr/bin/su postgres -c "/usr/bin/pg_dump webdb | gzip -9 > /var/lib/postgresql/pgsql_backup.$(date +"%a").sql.gz"
+
+/usr/bin/s3cmd del s3://{{ ansible_db_backup_bucket }}/pgsql_backup.$(date +"%a").sql.gz
+
+/usr/bin/s3cmd put /var/lib/postgresql/pgsql_backup.$(date +"%a").sql.gz s3://{{ ansible_db_backup_bucket }}/pgsql_backup.$(date +"%a").sql.gz
+
+su postgres -c "/bin/rm -f /var/lib/postgresql/pgsql_backup.$(date +"%a").sql.gz"
+
+exit 0
+

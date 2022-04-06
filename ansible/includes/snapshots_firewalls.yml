@@ -1,0 +1,135 @@
+    - name: Enable rentfree gunicorn systemd service...
+      ansible.builtin.command: "/usr/bin/systemctl enable gunicorn.service --user"
+      become: True
+      become_user: rentfree
+      args:
+        chdir: /home/rentfree/.config/systemd/user
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/1000"
+      register: rentfree_systemd_enable
+      retries: 3
+      delay: 5
+      until: rentfree_systemd_enable.failed == False
+
+    - name: Snapshot the database droplet in case we need to restore it in the future...
+      community.digitalocean.digital_ocean_snapshot:
+        oauth_token: "{{ ansible_do_apikey }}"
+        snapshot_name: "{{ ansible_dbserver_name }}-installed"
+        state: present
+        snapshot_type: droplet
+        droplet_id: "{{ ansible_do_dbdroplet_id }}"
+      register: postgresql_server_snapshot
+      delay: 5
+      retries: 3
+      until: postgresql_server_snapshot.failed == False
+      no_log: True
+
+    - name: Snapshot the webserver droplet in case we need to restore it in the future...
+      community.digitalocean.digital_ocean_snapshot:
+        oauth_token: "{{ ansible_do_apikey }}"
+        snapshot_name: "{{ ansible_do_webserver_name }}-installed"
+        state: present
+        snapshot_type: droplet
+        droplet_id: "{{ ansible_do_webdroplet_id }}"
+      register: postgresql_server_snapshot
+      delay: 5
+      retries: 3
+      until: postgresql_server_snapshot.failed == False
+      no_log: True
+
+    - name: Create a firewall and put our database in it, only allow incoming traffic from the VPC...
+      community.digitalocean.digital_ocean_firewall:
+        oauth_token: "{{ ansible_do_apikey }}"
+        name: "{{ ansible_dbserver_name }}-firewall"
+        state: present
+        inbound_rules:
+          - protocol: "tcp"
+            ports: "22"
+            sources:
+              addresses: ["192.168.1.0/24"]
+              droplet_ids: ["{{ ansible_do_dbdroplet_id }}"]
+          - protocol: "tcp"
+            ports: "5432"
+            sources:
+              addresses: ["192.168.1.0/24"]
+              droplet_ids: ["{{ ansible_do_dbdroplet_id }}"]
+        outbound_rules:
+          - protocol: "tcp"
+            ports: "1-65535"
+            destinations:
+              addresses: ["0.0.0.0/0", "::/0"]
+          - protocol: "udp"
+            ports: "1-65535"
+            destinations:
+              addresses: ["0.0.0.0/0", "::/0"]
+          - protocol: "icmp"
+            ports: "1-65535"
+            destinations:
+              addresses: ["0.0.0.0/0", "::/0"]
+        droplet_ids: ["{{ ansible_do_dbdroplet_id }}"]
+      register: rentfree_dodbfirewall
+      delay: 5
+      retries: 3
+      until: rentfree_dodbfirewall.failed == False
+      no_log: True
+
+    - name: Create another firewall and put our web server in it, only allow incoming traffic from 80, 22, and 443...
+      community.digitalocean.digital_ocean_firewall:
+        oauth_token: "{{ ansible_do_apikey }}"
+        name: "{{ ansible_do_webserver_name }}-firewall"
+        state: present
+        inbound_rules:
+          - protocol: "tcp"
+            ports: "22"
+            sources:
+              addresses: ["0.0.0.0/0", "::/0"]
+              droplet_ids: ["{{ ansible_do_webdroplet_id }}"]
+          - protocol: "tcp"
+            ports: "80"
+            sources:
+              addresses: ["0.0.0.0/0", "::/0"]
+              droplet_ids: ["{{ ansible_do_webdroplet_id }}"]
+          - protocol: "tcp"
+            ports: "443"
+            sources:
+              addresses: ["0.0.0.0/0", "::/0"]
+              droplet_ids: ["{{ ansible_do_webdroplet_id }}"]
+        outbound_rules:
+          - protocol: "tcp"
+            ports: "1-65535"
+            destinations:
+              addresses: ["0.0.0.0/0", "::/0"]
+          - protocol: "udp"
+            ports: "1-65535"
+            destinations:
+              addresses: ["0.0.0.0/0", "::/0"]
+          - protocol: "icmp"
+            ports: "1-65535"
+            destinations:
+              addresses: ["0.0.0.0/0", "::/0"]
+        droplet_ids: ["{{ ansible_do_webdroplet_id }}"]
+      register: rentfree_dowebfirewall
+      delay: 5
+      retries: 3
+      until: rentfree_dowebfirewall.failed == False
+      no_log: True
+
+    - name: Issue SSL certificates for our domain name with Certbot...
+      ansible.builtin.command:
+        cmd: "/snap/bin/certbot certonly -d {{ ansible_do_hostname }} -d *.{{ ansible_do_hostname }} --non-interactive"
+      register: certbot_issue
+      retries: 3
+      delay: 5
+      until: certbot_issue.failed == False
+      when: certbot_check.stat.exists == False
+
+    - name: Restart Nginx...
+      ansible.builtin.systemd:
+        name: nginx
+        state: restarted
+      register: nginx_restart
+      delay: 5
+      retries: 3
+      until: nginx_restart.failed == False
+      when: certbot_issue.changed == True
+

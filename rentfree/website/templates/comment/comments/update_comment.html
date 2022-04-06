@@ -1,0 +1,16 @@
+{% load comment_tags %}
+<div class="js-comment-update-mode col-10 col-md-11">
+    <form class="js-comment-edit-form" method="post" data-url="{% url 'comment:edit' pk=comment.id %}">
+        {% csrf_token %}
+        {% include 'comment/comments/comment_form.html' with placeholder=placeholder %}
+        <footer class="blockquote-footer edit-comment mt-2">
+                <input name="model_name" value="{% get_model_name model_object %}" hidden>
+                <input name="model_id" value="{{ model_object.id }}" hidden>
+                <input name="app_name" value="{% get_app_name model_object %}" hidden>
+                <input name="oauth" value="{{oauth}}" hidden>
+
+                {% include 'comment/comments/apply_icon.html' %}
+                {% include 'comment/comments/cancel_icon.html' %}
+        </footer>
+    </form>
+</div>

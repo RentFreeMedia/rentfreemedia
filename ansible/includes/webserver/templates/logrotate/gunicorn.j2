@@ -1,0 +1,23 @@
+/home/rentfree/logs/access.log {
+    daily
+    rotate 7
+    missingok
+    notifempty
+    create 0644 rentfree rentfree
+    postrotate
+        /usr/bin/kill -HUP 'cat /home/rentfree/run/gunicorn.pid'
+    endscript
+    nocompress
+}
+
+/home/rentfree/logs/error.log {
+    daily
+    rotate 7
+    missingok
+    notifempty
+    create 0644 rentfree rentfree
+    postrotate
+        /usr/bin/kill -HUP 'cat /home/rentfree/run/gunicorn.pid'
+    endscript
+    nocompress
+}

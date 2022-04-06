@@ -1,0 +1,17 @@
+{% load wagtailcore_tags wagtailadmin_tags wagtailsettings_tags website_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+<div class="row my-1{% if self.settings.custom_css_class %} class="{{self.settings.custom_css_class}}"{% if self.settings.custom_css_id %} id="{{self.settings.custom_css_id}}{% endif %}{% endif %}">
+    {% with page as item %}{% if item.author.count > 0 %}
+    <div class="{% if item.contributor.count > 0 %}col{% else %}col-7 col-md-6{% endif %} my-1">
+        {% for author in item.author.all %}{% if forloop.last %}<div class="content-author text-end my-1">{% else %}<div class="content-author text-end my-1">{% endif %}{% if author.url %}<a class="text-decoration-none" href="{{author.url}}">{% endif %}{% if author.author_display %}{{author.author_display}}{% elif author.first_name and author.last_name %}{{author.first_name}} {{author.last_name}}{% elif author.first_name or author.last_name == '' %}{{author.user_name}}{% endif %}&nbsp;
+        <img class="d-inline-block content-author-img rounded-circle" src="{% avatar_url author.user_object size=25 %}" height="50px" width="50px">{% if author.url %}</a>{% endif %}
+        </div>
+        {% endfor %}
+    </div>{% endif %}
+    {% if item.contributor.count > 0 %}
+    <div class="col my-1">
+        {% for contributor in item.contributor.all %}{% if forloop.last %}<div class="content-author text-start my-1 pl-2">{% else %}<div class="content-author text-start my-1 pl-2">{% endif %}{% if contributor.contributor_url %}<a class="text-decoration-none" href="{{contributor.contributor_url}}">{% endif %}<img class="d-inline-block content-author-img rounded-circle" src="{% avatar_url contributor.user_object size=25 %}" height="50px" width="50px">{% if contributor.contributor_url %}</a>{% endif %}&nbsp;{% if contributor.contributor_url %}<a class="text-decoration-none" href="{{contributor.contributor_url}}">{% endif %}{% if contributor.contributor_display %}{{contributor.contributor_display}}{% elif contributor.first_name and contributor.last_name %}{{contributor.first_name}} {{contributor.last_name}}{% elif contributor.first_name or contributor.last_name == '' %}{{contributor.user_name}}{% endif %}{% if contributor.contributor_url %}</a>{% endif %}
+        </div>
+        {% endfor %}
+    </div>{% endif %}{% endwith %}
+</div>
+</div>

@@ -1,0 +1,83 @@
+{% extends "account/base.html" %}
+
+{% load i18n wagtailadmin_tags website_tags %}
+
+{% block head_title %}{% trans "Extra Profile Options" %}{% endblock %}
+
+{% block content %}
+<h2>{% trans "User Profile" %}</h2>
+<p>{% blocktrans %}You may change all of your personal data below.{% endblocktrans %}</p>
+<p>{% blocktrans %}Time zone is required, and a username is required to post comments.{% endblocktrans %}</p>
+  <form class="profile" id="profile" method="post" enctype="multipart/form-data" action="{% url 'profile' %}">
+    {% csrf_token %}
+      {{ form.non_field_errors }}
+
+     <div class="row my-1">
+     <div class="col my-1">{{form.user.first_name.label_tag}} {{form.user.first_name}}{{form.user.first_name.errors}}</div>
+    <div class="col my-1">{{form.user.last_name.label_tag}} {{form.user.last_name}}{{form.user.last_name.errors}}</div>
+      </div>
+      <div class="row my-1">
+     <div class="col my-1">{{form.user.user_name.label_tag}} {{form.user.user_name}}{{form.user.user_name.errors}}</div>
+    <div class="col my-1">{{form.base_userprofile.phone.label_tag}} {{form.base_userprofile.phone}}{{form.base_userprofile.phone.errors}}</div>
+      </div>
+    <div class="row my-1">
+     <div class="col my-1">{{form.wagtail_userprofile.avatar.label_tag}} {{form.wagtail_userprofile.avatar}}{{form.wagtail_userprofile.avatar.errors}}</div>
+    <div class="col my-1">{{form.wagtail_userprofile.current_time_zone.label_tag}} {{form.wagtail_userprofile.current_time_zone}}{{form.wagtail_userprofile.current_time_zone.errors}}</div>
+      </div>
+<div class="my-2 mx-1" id="id_wagtail_userprofile-avatar-img"><sm><i>Current Profile Picture</i></sm><img class="rounded-circle mx-2" style="width:50px;height:50px;" src="{% avatar_url user size=50 %}"></div>
+<div class="my-2 mx-1" id="id_user-is_mailsubscribed"><sm><i>{{form.user.is_mailsubscribed.label_tag}}</i></sm> {{form.user.is_mailsubscribed}}{{form.user.is_mailsubscribed.errors}}</div>
+    <br>
+    <button type="submit" class="primaryAction btn btn-primary">{% trans "Submit" %}</button><button class="secondaryAction btn btn-secondary mx-3" onclick="javascript:history.back();">{% trans "Cancel" %}</button>
+  </form>
+  <br>
+  <hr>
+  <br>
+  <h2>{% trans "Subscription Details" %}</h2>
+  <p>{% blocktrans %}You can access your subscription details, change or cancel your subscription, or start a new premium subscription by clicking the subscribe button below.{% endblocktrans %}</p>
+  <a href="/subscribe/"><button class="my-4 primaryAction btn btn-primary">{% trans "Subscribe" %}</button></a>
+  <br>
+  <hr>
+  <br>
+  <h2>{% trans "Two Factor Security" %}</h2>
+  <p>{% blocktrans %}You may enable or disable 2FA by clicking the two factor button below.{% endblocktrans %}</p>
+  <a href="/two_factor/setup"><button class="my-4 primaryAction btn btn-primary">{% trans "Two Factor" %}</button></a>
+  <br>
+  <hr>
+  <br>
+  <h2>{% trans "Password Change" %}</h2>
+  <p>{% blocktrans %}You may change your password by clicking the change password button below.{% endblocktrans %}</p>
+  <a href="/password/change"><button class="my-4 primaryAction btn btn-primary">{% trans "Change Password" %}</button></a>
+  <br>
+  <hr>
+  <br>
+  <h2>{% trans "Change E-Mail" %}</h2>
+  <p>{% blocktrans %}You may change your email address by clicking the change email button below.{% endblocktrans %}</p>
+  <a href="/email"><button class="my-4 primaryAction btn btn-primary">{% trans "Change Email" %}</button></a>
+  <br>
+  <hr>
+  <br>
+  <h2>{% trans "Log Out" %}</h2>
+  <form method="post" action="{% url 'account_logout' %}">
+  {% csrf_token %}
+  {% if redirect_field_value %}
+  <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+  {% endif %}
+  <p>{% blocktrans %}Click the button below to log out.{% endblocktrans %}</p>
+  <br>
+  <button type="submit" class="btn btn-primary">{% trans 'Sign Out' %}</button>
+</form>
+</div>
+
+
+
+<script type="text/javascript">
+var input = document.getElementById( 'id_wagtail_userprofile-avatar' );
+var infoArea = document.getElementById( 'id_wagtail_userprofile-avatar-label' );
+input.addEventListener( 'change', showFileName );
+function showFileName( event ) {
+  var input = event.srcElement;
+  var fileName = input.files[0].name;
+  infoArea.textContent = fileName;
+}
+</script>
+{% endblock %}

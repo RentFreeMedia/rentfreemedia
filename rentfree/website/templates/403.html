@@ -1,0 +1,17 @@
+{% extends "website/pages/web_page.html" %}
+
+{% block title %}Forbidden{% endblock %}
+
+{% block body_class %}403{% endblock %}
+
+{% block content %}
+<div class="container">
+        <h2 class="mt-4">Forbidden</h2>
+        <br />
+        <h4>Sorry, you do not have access to that page.</h4>
+        <p>
+            The error has been logged and reported to an engineer.
+            Please try again soon. If the issue persists, contact us to resolve.
+        </p>
+</div>
+{% endblock %}

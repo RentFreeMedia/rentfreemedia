@@ -1,0 +1,145 @@
+{% load wagtailcore_tags wagtailimages_tags wagtailsettings_tags website_tags %}{% wagtail_site as current_site %}{% get_settings use_default_site=True %}
+{{% if self.parent_page.is_podcast_index %}
+  "@context": "http://schema.org",
+  "@type": "WebPage",{% if self.title %}
+  "name": "{{self.title}}",{% endif %}
+  "mainEntity": {
+    "@type": "PodcastEpisode",
+      "url": "{{self.get_full_url}}",{% if self.tags.count %}
+      "keywords": [{% for tag in self.tags.all %}"{{tag}}"{% if not forloop.last %}, {% endif %}{% endfor %}],{% endif %}
+      "name": "{{self.title|titlesplit}}",{% if self.cover_image %}{% image self.cover_image fill-10000x10000-c75 format-jpeg jpegquality-60 as img_11 %}{% image self.cover_image fill-40000x30000-c75 format-jpeg jpegquality-60 as img_21 %}{% image self.cover_image fill-16000x9000-c75 format-jpeg jpegquality-60 as img_169 %}
+      "image": [
+        "{{img_11.url}}",
+        "{{img_21.url}}",
+        "{{img_169.url}}"
+      ],{% endif %}
+      "datePublished": "{{self.first_published_at|date:'Y-m-d'}}",
+      "timeRequired": "PT{% if self.uploaded_media %}{{self.uploaded_media.duration|isoduration}}{% elif self.remote_media %}{{self.remote_media_duration|isoduration}}{% endif %}M",
+      "episodeNumber": "{{self.episode_number}}",
+      "description": "{{self.get_description}}",{% if self.uploaded_media or self.remote_media %}
+      "associatedMedia": {
+        "@type": "MediaObject",{% if self.remote_media and self.remote_media_type != 'vimeo' and self.remote_media_type != 'youtube' %}
+        "contentUrl": "{{self.remote_media}}"{% endif %}{% if self.remote_media and self.remote_media_type == 'vimeo' or self.remote_media_type == 'youtube' %}
+        "embedUrl": "{{self.remote_media}}"{% endif %}{% if self.uploaded_media %}
+        "contentUrl": "{{self.remote_media}}"{% endif %}{% if self.uploaded_media.thumbnail %}{% image self.uploaded_media.thumbnail fill-10000x10000-c75 format-jpeg jpegquality-60 as thumb_11 %}{% image self.uploaded_media.thumbnail fill-40000x30000-c75 format-jpeg jpegquality-60 as thumb_21 %}{% image self.uploaded_media.thumbnail fill-16000x9000-c75 format-jpeg jpegquality-60 as thumb_169 %},
+        "thumbnailUrl": [
+          "{{thumb_11.url}}",
+          "{{thumb_21.url}}",
+          "{{thumb_169.url}}"
+        ]{% elif self.remote_media_thumbnail %}{% image self.remote_media_thumbnail fill-10000x10000-c75 format-jpeg jpegquality-60 as thumb_11 %}{% image self.remote_media_thumbnail fill-40000x30000-c75 format-jpeg jpegquality-60 as thumb_21 %}{% image self.remote_media_thumbnail fill-16000x9000-c75 format-jpeg jpegquality-60 as thumb_169 %},
+        "thumbnailUrl": [
+          "{{thumb_11.url}}",
+          "{{thumb_21.url}}",
+          "{{thumb_169.url}}"
+        ]{% endif %}
+      },{% endif %}
+      "partOfSeries": {
+        "@type": "PodcastSeries",
+        "name": "{{self.parent_page.rss_title}}",
+        "url": "{{self.parent_page.full_url}}",
+        "description": "{{self.parent_page.rss_description|strip_markup}}",
+        "webFeed": "{{self.parent_page.full_url}}rss/",{% if self.parent_page.rss_image %}
+        "image":{% image self.parent_page.rss_image fill-10000x10000-c75 format-jpeg jpegquality-60 as feedimg_11 %}{% image self.parent_page.rss_image fill-40000x30000-c75 format-jpeg jpegquality-60 as feedimg_21 %}{% image self.parent_page.rss_image fill-16000x9000-c75 format-jpeg jpegquality-60 as feedimg_169 %} [
+          "{{feedimg_11.url}}",
+          "{{feedimg_21.url}}",
+          "{{feedimg_169.url}}"
+        ]{% endif %}
+      },{% elif self.parent_page.is_article_index %}
+  "@context": "http://schema.org",
+  "@type": "WebPage",{% if self.title %}
+  "name": "{{self.title}}",{% endif %}
+  "mainEntity": {
+    "@type": "NewsArticle",
+      "url": "{{self.get_full_url}}",{% if self.tags.count %}
+      "keywords": [{% for tag in self.tags.all %}"{{tag}}"{% if not forloop.last %}, {% endif %}{% endfor %}]{% endif %},
+      "datePublished": "{{self.first_published_at|date:'Y-m-d'}}",{% if self.first_published_at != self.last_published_at %}
+      "dateModified": "{{self.last_published_at|date:'Y-m-d'}}",{% endif %}
+      "headline": "{{self.title}}",
+      "description": "{{self.get_description}}",
+      "isPartOf": {
+        "@type": "CreativeWorkSeries",
+        "name": "{{self.parent_page.rss_title}}",
+        "description": "{{self.parent_page.rss_description|strip_markup}}",
+        "url": "{{self.parent_page.full_url}}",
+        "associatedMedia": {
+          "@type": "MediaObject",{% if self.rss_title %}
+          "name": "{{self.parent_page.rss_title}} RSS Feed",{% endif %}{% if self.rss_description %}
+          "description": "{{self.parent_page.rss_description}}",{% endif %}
+          "contentUrl": "{{self.parent_page.full_url}}rss/",
+          "encodingFormat": "application/rss+xml"{% if self.rss_image %}
+          "image":{% image self.parent_page.rss_image fill-10000x10000-c75 format-jpeg jpegquality-60 as feedimg_11 %}{% image self.parent_page.rss_image fill-40000x30000-c75 format-jpeg jpegquality-60 as feedimg_21 %}{% image self.parent_page.rss_image fill-16000x9000-c75 format-jpeg jpegquality-60 as feedimg_169 %} [
+            "{{feedimg_11.url}}",
+            "{{feedimg_21.url}}",
+            "{{feedimg_169.url}}"
+          ]{% endif %}
+        }
+      },{% if self.uploaded_media or self.remote_media %}
+      "associatedMedia": {
+        "@type": "MediaObject",{% if self.remote_media and self.remote_media_type != 'vimeo' and self.remote_media_type != 'youtube' %}
+        "contentUrl": "{{self.remote_media}}",
+        "encodingFormat": "{{self.remote_media_type}}"{% endif %}{% if self.remote_media and self.remote_media_type == 'vimeo' or self.remote_media_type == 'youtube' %}
+        "embedUrl": "{{self.remote_media}}"{% endif %}{% if self.uploaded_media %}
+        "contentUrl": "{{self.uploaded_media.url}}",
+        "encodingFormat": "{{self.uploaded_media_type}}"{% endif %}{% if self.uploaded_media.thumbnail %}{% image self.uploaded_media.thumbnail fill-10000x10000-c75 format-jpeg jpegquality-60 as thumb_11 %}{% image self.uploaded_media.thumbnail fill-40000x30000-c75 format-jpeg jpegquality-60 as thumb_21 %}{% image self.uploaded_media.thumbnail fill-16000x9000-c75 format-jpeg jpegquality-60 as thumb_169 %},
+        "thumbnailUrl": [
+          "{{thumb_11.url}}",
+          "{{thumb_21.url}}",
+          "{{thumb_169.url}}"
+        ]{% elif self.remote_media_thumbnail %}{% image self.remote_media_thumbnail fill-10000x10000-c75 format-jpeg jpegquality-60 as thumb_11 %}{% image self.remote_media_thumbnail fill-40000x30000-c75 format-jpeg jpegquality-60 as thumb_21 %}{% image self.remote_media_thumbnail fill-16000x9000-c75 format-jpeg jpegquality-60 as thumb_169 %},
+        "thumbnailUrl": [
+          "{{thumb_11.url}}",
+          "{{thumb_21.url}}",
+          "{{thumb_169.url}}"
+        ]{% endif %}
+      },{% endif %}{% endif %}{% if self.author.count > 0 %}
+      "author": {% for author in self.author.all %}{% if self.author.values.count >= 2 %}{% if forloop.first %}[{% endif %}{% endif %}{
+        "@type": "Person",
+        "name": "{% if author.author_display %}{{author.author_display}}{% elif author.first_name and author.last_name %}{{author.first_name}} {{author.last_name}}{% elif author.first_name or author.last_name == '' %}{{author.user_name}}{% endif %}"{% if author.url %},
+        "url": "{{author.url}}"{% endif %}
+      }{% if self.author.values.count >= 2 %}{% if forloop.last %}]{% else %},
+      {% endif %}{% endif %}{% endfor %},{% endif %}{% if self.contributor.count > 0 %}
+      "contributor": {% for contributor in self.contributor.all %}{% if self.contributor.values.count >= 2 %}{% if forloop.first %}[{% endif %}{% endif %}{
+        "@type": "Person",
+        "name": "{% if contributor.contributor_display %}{{contributor.contributor_display}}{% elif contributor.first_name and contributor.last_name %}{{contributor.first_name}} {{contributor.last_name}}{% elif contributor.first_name or contributor.last_name == '' %}{{contributor.user_name}}{% endif %}"{% if contributor.contributor_url %},
+        "url": "{{contributor.contributor_url}}"{% endif %}
+      }{% if self.contributor.values.count >= 2 %}{% if forloop.last %}]{% else %},
+      {% endif %}{% endif %}{% endfor %},{% endif %}{% if settings.website.SeoSettings.struct_meta %}
+      "publisher": {
+        "@type": "{% if settings.website.SeoSettings.struct_org_type %}{{settings.website.SeoSettings.struct_org_type}}{% else %}Organization{% endif %}",
+        "url": "{{current_site.root_url}}"{% if settings.website.SeoSettings.struct_org_name %},
+        "name": "{{settings.website.SeoSettings.struct_org_name}}"{% endif %}{% if settings.website.SeoSettings.struct_org_logo %}{% image settings.website.SeoSettings.struct_org_logo fill-10000x10000-c75 format-jpeg jpegquality-60 as logo_11 %},
+        "logo": "{{logo_11.url}}"{% endif %}
+      }{% endif %}
+    },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [{
+      "@type": "ListItem",
+      "position": 1,
+      "name": "{{current_site.site_name}}",
+      "item": {
+        "@type": "{% if settings.website.SeoSettings.struct_org_type %}{{settings.website.SeoSettings.struct_org_type}}{% else %}Organization{% endif %}",
+        "@id": "{{current_site.root_url}}"
+      }
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{self.parent_page.title}}",
+      "item": {
+        "@type": "WebPage",{% if self.season_number and self.parent_page.rss_itunes_type == 'serial' %}
+        "@id": "{{self.parent_page.full_url}}?p={{self.season_number}}"{% else %}
+        "@id": "{{self.parent_page.full_url}}"{% endif %}
+      }
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "{{self.title}}",
+      "item": {
+        "@type": "WebPage",
+        "@id": "{{request.get_full_path}}"
+      }
+    }]
+  }
+}

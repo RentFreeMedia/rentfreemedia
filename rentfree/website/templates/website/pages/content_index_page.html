@@ -1,0 +1,39 @@
+{% extends "website/pages/web_page.html" %}
+{% load wagtailcore_tags wagtailimages_tags website_tags wagtailsettings_tags %}
+{% block index_filters %}{% endblock %}
+{% block indexpage_body %}
+{% if request.GET.tag %}<p><h4 class="fst-italic">...with category "{{request.GET.tag}}"<a class="text-decoration-none" href="{{self.full_url}}">&nbsp;&nbsp;<i class="fs-3 bi bi-x-circle ml-4"></i></a></h4></p>{% endif %}
+{% for content in index_paginated %}
+{% if not forloop.first %}
+<hr>{% endif %}
+<div class="row mt-4">
+    {% if self.show_images %}
+    <div class="col-6 col-md-3">
+        <a href="{% pageurl content %}" title="{{content.title}}">
+        {% if content.cover_image %}
+            {% image content.specific.cover_image fill-750x750-c100 format-jpeg jpegquality-60 class="img-fluid rounded" %}
+        {% else %}
+            <p class="p-5 lead text-center bg-secondary text-white-50">{{content.specific.title}}</p>
+        {% endif %}
+        </a>
+    </div>
+    {% endif %}
+    <div class="col-6 col-md-9">
+        <h3><a href="{% pageurl content %}">{{content.specific.title}}</a></h3>
+        {% if self.show_captions and content.specific.caption %}<p class="lead">{{content.specific.caption}}</p>{% endif %}
+        {% if self.show_meta %}<p>{{content.specific.get_pub_date}}</p>{% endif %}
+        {% if self.show_preview_text %}<p class="d-none d-md-block">{{content.specific.body_preview|strip_markup}}</p>{% endif %}
+    </div>
+</div>
+{% endfor %}
+
+
+{% if self.rss_itunes_type == 'serial' %}
+{% include "website/includes/pagination_serial_podcast.html" with items=index_paginated %}{% else %}
+{% include "website/includes/pagination_standard.html" with items=index_paginated %}{% endif %}
+{% endblock %}
+
+{% block schema %}{% if settings.website.SeoSettings.struct_meta %}
+<script type="application/ld+json">
+{% include "website/includes/struct_data_content_index.json" with page=self %}
+</script>{% endif %}{% endblock %}

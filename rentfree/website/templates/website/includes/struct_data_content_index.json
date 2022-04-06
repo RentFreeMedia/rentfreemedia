@@ -1,0 +1,55 @@
+{% load wagtailcore_tags wagtailimages_tags wagtailsettings_tags website_tags %}{% wagtail_site as current_site %}{% get_settings use_default_site=True %}
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",{% if self.rss_title %}
+  "name": "{{self.title}}",{% endif %}
+  "mainEntity": {{% if self.is_podcast_index %}
+    "@type": "PodcastSeries",
+      "name": "{{self.rss_title}}",
+      "description": "{{self.rss_description|strip_markup}}",
+      "webFeed": "{{self.full_url}}rss/",
+      "image":{% image self.rss_image fill-10000x10000-c75 format-jpeg jpegquality-60 as feedimg_11 %}{% image self.rss_image fill-40000x30000-c75 format-jpeg jpegquality-60 as feedimg_21 %}{% image self.rss_image fill-16000x9000-c75 format-jpeg jpegquality-60 as feedimg_169 %} [
+        "{{feedimg_11.url}}",
+        "{{feedimg_21.url}}",
+        "{{feedimg_169.url}}"
+      ]
+    },{% elif self.is_article_index %}
+    "@type": "CreativeWorkSeries",
+      "name": "{{self.rss_title}}",
+      "description": "{{self.rss_description|strip_markup}}",
+      "url": "{{self.full_url}}",
+      "associatedMedia": {
+        "@type": "MediaObject",{% if self.rss_title %}
+        "name": "{{self.rss_title}} RSS Feed",{% endif %}{% if self.rss_description %}
+        "description": "{{self.rss_description}}",{% endif %}
+        "contentUrl": "{{self.full_url}}rss/",
+        "encodingFormat": "application/rss+xml",{% if self.rss_image %}
+        "image":{% image self.rss_image fill-10000x10000-c75 format-jpeg jpegquality-60 as feedimg_11 %}{% image self.rss_image fill-40000x30000-c75 format-jpeg jpegquality-60 as feedimg_21 %}{% image self.rss_image fill-16000x9000-c75 format-jpeg jpegquality-60 as feedimg_169 %} [
+          "{{feedimg_11.url}}",
+          "{{feedimg_21.url}}",
+          "{{feedimg_169.url}}"
+        ]{% endif %}
+      }
+  },{% endif %}
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [{
+      "@type": "ListItem",
+      "position": 1,
+      "name": "{{current_site.site_name}}",
+      "item": {
+        "@type": "{% if settings.website.SeoSettings.struct_org_type %}{{settings.website.SeoSettings.struct_org_type}}{% else %}Organization{% endif %}",
+        "@id": "{{current_site.root_url}}"
+      }
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{self.title}}",
+      "item": {
+        "@type": "WebPage",
+        "@id": "{{request.get_full_path}}"
+      }
+    }]
+  }
+}

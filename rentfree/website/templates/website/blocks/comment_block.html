@@ -1,0 +1,9 @@
+{% load wagtailcore_tags comment_tags wagtailsettings_tags website_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+{% if page and page.can_have_comments %}
+<div{% if self.settings.custom_css_class %} class="{{ self.settings.custom_css_class }}"{% endif %}{% if self.settings.custom_id %} id="{{ self.settings.custom_id }}"{% endif %}>
+    {% if request.user.is_authenticated and request.user.user_name %}{% render_comments page request %}{% else %}
+    <p class="fw-light"><i>You must be <a href="/login"/>logged in</a> and <a href="/profile/">have a username in your profile</a> to view comments.</i></p>{% endif %}
+</div>{% endif %}
+
+
+

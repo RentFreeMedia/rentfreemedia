@@ -1,0 +1,28 @@
+
+{% extends "openid/base.html" %}
+
+{% load i18n %}
+
+{% block head_title %}OpenID Sign In{% endblock %}
+
+{% block content %}
+{% block messages %}
+{% if messages %}
+<div class="container">
+	{% for message in messages %}
+	<div class="alert alert-{{ message.tags|map_to_bootstrap_alert }}" role="alert">{{ message }}</div>
+	{% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+<h1>{% trans 'OpenID Sign In' %}</h1>
+
+
+<form id="openid_login_form" class="openid_login" method="post" action="{% url 'openid_login' %}">
+{% csrf_token %}
+{{form.as_p}}
+<button type="submit" class="btn btn-primary">Sign In</button>
+</form>
+
+{% endblock %}

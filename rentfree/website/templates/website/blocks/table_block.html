@@ -1,0 +1,31 @@
+{% load table_block_tags wagtailcore_tags wagtailsettings_tags website_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+<table class="table{% if self.settings.custom_css_class %} {{ self.settings.custom_css_class }}{% endif %}"{% if self.custom_css_id %} id="{{self.settings.custom_css_id}}"{% endif %}>
+    {% if self.table.first_row_is_table_header %}
+        <thead>
+            <tr>
+                {% for cell in self.table.data.0 %}
+                    <th scope="col">{{ cell|default_if_none:'' }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+    {% endif %}
+
+    <tbody>
+        {% if self.table.table_caption %}<caption><i>{{ self.table.table_caption }}</i></caption>{% endif %}
+        {% for cell in self.table.data.0 %}
+            {% if not self.table.first_row_is_table_header %}<td>{{ cell|default_if_none:'' }}</td>{% endif %}
+        {% endfor %}        
+
+        {% for row in self.table.data|slice:"1:" %}
+            <tr>
+                {% for cell in row %}
+                    {% if self.table.first_col_is_header and cell == row.0 %}
+                        <th scope="row">{{ cell|default_if_none:'' }}</th>
+                    {% else %}
+                        <td>{{ cell|default_if_none:'' }}</td>
+                    {% endif %}
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

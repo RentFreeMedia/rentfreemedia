@@ -1,0 +1,16 @@
+{% load wagtailcore_tags wagtailadmin_tags wagtailsettings_tags website_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
+<div class="row my-1{% if self.settings.custom_css_class %} {{ self.settings.custom_css_class }}{% endif %}"{% if self.settings.custom_css_id %} id="{{ self.settings.custom_css_id }}"{% endif %}>
+{% with page as item %}
+<div class="col my-1 text-center text-md-start"><h3>{{ item.title|titlesplit }}</h3>
+{% if item.caption %}
+<p class="lead"><h6>{{item.caption}}</h6></p>
+{% if item.get_pub_date %}
+    <span class="content-date">&bull; {{ item.get_pub_date }}</span>
+    {% endif %}
+{% endif %}</div>
+<hr class="d-block d-sm-none my-4">
+{% if item.tags.count %}<div class="col my-1 text-center text-md-end">
+<h3>Categories</h3>
+<p>{% for tag in item.tags.all %}<h6 class="d-inline-block"><a class="text-decoration-none" href="{{item.parent_page.url}}?tag={{tag.slug}}"><i class="bi-tag"></i>&nbsp;{{tag}}{% if not forloop.last %}<span class="d-inline-block">&nbsp;&bull;&nbsp;</span>{% endif %}</a></h6>{% endfor %}</p></div><hr class="d-block d-sm-none my-4">{% endif %}
+{% endwith %}
+</div>

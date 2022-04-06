@@ -1,0 +1,20 @@
+[Unit]
+Description = gunicorn
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+PermissionsStartOnly = true
+PIDFile = %h/run/gunicorn.pid
+Restart=on-failure
+RestartSec=2
+WorkingDirectory = %h/rentfree
+ExecStartPre = /usr/bin/mkdir %h/run
+ExecStart = %h/.local/bin/gunicorn website.wsgi --timeout 300 --workers {{ ((ansible_processor_vcpus|int * 2) + 1) }} -b 127.0.0.1:8787 --proxy-protocol --pid %h/gunicorn.pid --capture-output --access-logfile %h/logs/access.log --error-logfile %h/logs/error.log
+ExecReload = /usr/bin/kill -s HUP $MAINPID
+ExecStop = /usr/bin/kill -s TERM $MAINPID
+ExecStopPost = /usr/bin/rm -rf %h/run
+PrivateTmp = true
+
+[Install]
+WantedBy = default.target
