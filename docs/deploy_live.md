@@ -32,7 +32,17 @@ Note that for SSL key issuance to work, you'll need to have pointed your domain 
 
 When the script has finished and you confirm that your site is alive, you're not quite done yet.  You will surely need to set up your mail server information in your DNS records according to your mail service's instructions, so be sure to do that lest your user notification emails wind up in the spam folders of your users.
 
+If you are using an API based email service as recommended, you'll need to change the default email backend in `website / settings / prod.py` in the `POST_OFFICE` section to:
+
+`anymail.backends.(your_supported_mail_service).EmailBackend`
+
+...and configure Anymail as explained in their docs, here:
+
+[https://anymail.dev/en/stable/esps/](https://anymail.dev/en/stable/esps/)
+
 You'll also need to verify via your Stripe dashboard that webhook events are being sent successfully to your web server.
+
+After doing the above you'll probably want to send a test email to yourself via the `Send Email` menu in the CMS admin to ensure outgoing mail is working.
 
 If it doesn't all work right away, give it an hour or so and try again, as it may take a while for DNS changes to spread out.
 
