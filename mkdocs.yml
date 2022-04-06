@@ -15,3 +15,4 @@ nav:
     - HTML Templates: customizing_templates.md
     - Site Settings: site_settings.md
     - Django Core Admin: django_admin.md
+    - Deployment: deploy_live.md
