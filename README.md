@@ -70,7 +70,7 @@ AGPL, because you are free to use this code as you see fit to publish your own c
 
 ### Contributing and Local Development
 
-PRs are welcome!  Please discuss new features you would like to see in the [discussions](https://github.com/RentFreeMedia/rentfreemedia/discussions) area so that we can keep the issues forum prioritized for bug reports. 
+PRs are welcome!  Please discuss new features you would like to see in the [discussions](https://github.com/RentFreeMedia/rentfreemedia/discussions) area so that we can keep the issues forum prioritized for bug reports. The [Needs / Wants](https://github.com/RentFreeMedia/rentfreemedia/issues/2) thread atop the issues forum is an up-to-date list of priorities for the future.
 
 While this is a project released by two people and largely written by one guy in his spare time, I don't want to be inaccesible or standoff-ish to users. It is our hope that this project grows and thrives in spirit of open source, and users not only break free from their corporate publishers but also help others do the same. As Wagtail is a CMS that sits on top of, in front of, Django... feature proposals should integrate with Wagtail. While it's possible to do anything in code, doing it with future maintainability in mind is also a big consideration. Would-be contributors and custom solution developers would be wise to not only thoroughly read the [Wagtail docs](https://docs.wagtail.org), but also read the Wagtail code itself. 
 
