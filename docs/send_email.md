@@ -160,7 +160,7 @@ By using drip email, you could have a whole marketing plan's worth of emails pre
 
 Lets create a drip email as an example.
 
-Step 1. Select `Email`, and then `Drop Email` from the main CMS menu.
+Step 1. Select `Email`, and then `Drip Email` from the main CMS menu.
 
 Step 2. Click on `Add Drip`
 

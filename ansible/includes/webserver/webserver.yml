@@ -700,7 +700,7 @@
         name: rentfree_publish
         user: rentfree
         job: "cd $HOME/rentfree && /usr/bin/python3 manage.py publish_scheduled_pages > /dev/null 2>&1"
-        minute: 7
+        minute: 0
       retries: 3
       delay: 5
       register: create_publish_cron
@@ -713,6 +713,7 @@
         job: "cd $HOME/rentfree && /usr/bin/python3 manage.py send_drips > /dev/null 2>&1"
         weekday: 4
         hour: 16
+        minute: 1
       retries: 3
       delay: 5
       register: create_mail_cron
