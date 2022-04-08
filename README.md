@@ -4,7 +4,7 @@
 
 RentFree Media is a media distribution framework built on Django and Wagtail. With it you can publish either public or premium / subscription-based content similar to the features provided in services such as Patreon, Apple Podcasts, and Substack.
 
-## Need Help? Have Questions?
+### Need Help? Have Questions?
 
 Feel free to post a [discussion](https://github.com/RentFreeMedia/rentfreemedia/discussions) for questions or an [issue](https://github.com/RentFreeMedia/rentfreemedia/issues) if you have trouble, contact info is also available in my git profile if you'd like to hire me to help with deployment or customization, or just talk for a few minutes about how you might use the code, I'm happy to help!
 
