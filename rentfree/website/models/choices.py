@@ -211,6 +211,10 @@ DEFAULTS = {
     ),
 
     'SOCIAL_LINK_CHOICES': (
+        ('apple_podcasts', 'Apple Podcasts'),
+        ('google_podcasts', 'Google Podcasts'),
+        ('spotify', 'Spotify'),
+        ('stitcher', 'Stitcher'),
         ('facebook', 'Facebook'),
         ('twitter', 'Twitter'),
         ('instagram', 'Instagram'),
