@@ -906,13 +906,7 @@ class JumbotronBlock(BaseLayoutBlock):
 
     def get_context(self, value, parent_context=None):
         context = super().get_context(value, parent_context=parent_context)
-
-        if value['background_image']:
-            context['latest_post_image'] = value['background_image']
-        elif context['settings'].request_or_site.seosettings.main_entity_page.specific.get_children().live().order_by('-first_published_at')[0].specific.cover_image:
-            context['latest_post_image'] = context['settings'].request_or_site.seosettings.main_entity_page.specific.get_children().live().order_by('-first_published_at')[0].specific.og_image
-        elif context['settings'].request_or_site.seosettings.main_entity_page.specific.get_children().live().order_by('-first_published_at')[0].specific.og_image:
-            context['latest_post_image'] = context['settings'].request_or_site.seosettings.main_entity_page.specific.get_children().live().order_by('-first_published_at')[0].specific.cover_image      
+    
         return context
 
 
