@@ -8,6 +8,8 @@ It processes subscription payments via Stripe, and in addition to serving premiu
 
 ![subscribe-2](https://raw.githubusercontent.com/RentFreeMedia/rentfreemedia/main/docs/img/readme2.jpg)
 
+`...`
+
 ![subscribe-3](https://raw.githubusercontent.com/RentFreeMedia/rentfreemedia/main/docs/img/readme3.jpg)
 
 
