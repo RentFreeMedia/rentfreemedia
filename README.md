@@ -6,8 +6,6 @@ RentFree Media is a media distribution framework built on Django and Wagtail. Wi
 
 It processes subscription payments via Stripe, and makes authenticated RSS feeds for podcasts and premium written articles, like so...
 
-![subscribe-1](https://raw.githubusercontent.com/RentFreeMedia/rentfreemedia/main/docs/img/readme1.jpg)
-
 ![subscribe-2](https://raw.githubusercontent.com/RentFreeMedia/rentfreemedia/main/docs/img/readme2.jpg)
 
 ![subscribe-3](https://raw.githubusercontent.com/RentFreeMedia/rentfreemedia/main/docs/img/readme3.jpg)
