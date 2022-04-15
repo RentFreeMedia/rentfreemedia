@@ -1,5 +1,11 @@
 # Paid Content
 
+## The Subscribe Page
+
+All user facing actions for the payment portion of this platform are available to the user via the `/subscribe/` page.  Othe templates within the payment app are just confirmation and redirect landing pages.
+
+## Segments
+
 `Segments` are the heart of Rent Free Media's support for paid subscriber content. If you have used other market segmentation libraries, you may be familiar with the functionality.
 
 Essentially, users are assigned to a "tier" by rules matching their payment status. When a user requests a page that has a tier variant, they are given the version of the page that matches their tier silently.

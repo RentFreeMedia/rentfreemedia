@@ -34,6 +34,10 @@ More optimally, a custom upload form could be provided that allows for chunked u
 
 [https://github.com/torchbox/wagtailmedia](https://github.com/torchbox/wagtailmedia)
 
+Your storage for premium content must be compatible with [django-storages](https://django-storages.readthedocs.io/en/latest/) or, you must provide your own storage library and settings, one or the other. The default storage classes are compatible with Digital Ocean and are specified in `rentfree / custom_storages.py` if you need to change any options. There's a storage class for static files, a storage class for public media, and a storage class for premium / private media. They are named accordingly. The primary difference between them is that the premium / private bucket is set to not use any CDN-type URL, and is set to private for all objects.
+
+Premium media embedded in pages with the provided javascript player uses temporary signed URLs from the storage backend, whereas RSS feed premium media items use X-Sendfile URLs.  RSS feed X-Sendfile media downloads are tracked in the `Subscriptions` menu in the CMS, the embedded player in site pages does not register a download for playing premium media via the embedded player. The idea behind this design is that users sharing their feed with others is the most common form of illegal sharing of premium content, whereas it's less likely that a user would give their username and password for a site with billing information on it to another person or group of people.
+
 
 ## Important Concepts in This Section
 1. Generally, throughout the site images are converted to jpeg automatically, so uploading large PNG files is best-practice for image uploads.
