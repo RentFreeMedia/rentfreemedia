@@ -7,8 +7,8 @@
 </h2>
 
 <form class="form" method="post" class="login">
-  {% csrf_token %}
   <div class="form-group">
+  {% csrf_token %}
   {{ form.non_field_errors }}
   <div class="col my-1">{{ form.otp_token.label }}
   <input type="text" name="otp_token" autofocus="autofocus" autocomplete="off" inputmode="numeric" required="" id="id_otp_token" class="form-control"></div>
