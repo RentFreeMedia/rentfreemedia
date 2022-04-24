@@ -40,6 +40,7 @@ from modelcluster.fields import ParentalKey
 from modelcluster.models import get_all_child_relations
 from modelcluster.tags import ClusterTaggableManager
 from pathlib import Path
+from post_office import mail
 from taggit.models import TaggedItemBase
 from users.tokens import premium_token
 from wagtail.admin.edit_handlers import (
@@ -2630,6 +2631,9 @@ class FormPageMixin(models.Model):
                 if email.reply_address:
                     template_reply_to = Template(email.reply_address)
                     message_args['reply_to'] = template_reply_to.render(context).split(',')
+                else:
+                    template_reply_to = Template(settings.EMAIL_ADDR)
+                    message_args['reply_to'] = template_reply_to.render(context)
                 # CC
                 if email.cc_address:
                     template_cc = Template(email.cc_address)
@@ -2651,10 +2655,15 @@ class FormPageMixin(models.Model):
                 template_to = Template(email.to_address)
                 message_args['to'] = template_to.render(context).split(',')
 
-                # Send email
-                message = EmailMessage(**message_args)
-                message.content_subtype = 'html'
-                message.send()
+                mail.send(
+                    message_args['to'],
+                    message_args['from_email'],
+                    subject=message_args['subject'],
+                    cc=message_args['cc'] if email.bcc_address else None,
+                    bcc=message_args['bcc'] if email.bcc_address else None,
+                    html_message=message_args['body'],
+                    headers={'Reply-to': message_args['reply_to']}
+                )
 
         for fn in hooks.get_hooks('form_page_submit'):
             fn(instance=self, form_submission=form_submission)
@@ -2666,35 +2675,41 @@ class FormPageMixin(models.Model):
         addresses = [x.strip() for x in self.to_address.split(',')]
         content = []
 
-        for key, value in self.data_to_dict(processed_data, request).items():
-            content.append('{0}: {1}'.format(
-                key.replace('_', ' ').title(),
-                value
-            ))
+        context = Context(self.data_to_dict(processed_data, request))
 
-        content = '\n-------------------- \n'.join(content)
+        genemail = GeneralSettings.for_request(request).from_email
 
         # Build email message parameters
         message_args = {
-            'body': content,
-            'to': addresses,
+            'body': context['message']
         }
-        if self.subject:
-            message_args['subject'] = self.subject
-        else:
-            message_args['subject'] = self.title
-        genemail = GeneralSettings.for_request(request).from_email
-        if genemail:
-            message_args['from_email'] = genemail
-        if self.reply_address:
-            # Render reply-to field using form submission as context.
-            context = Context(self.data_to_dict(processed_data, request))
-            template_reply_to = Template(self.reply_address)
-            message_args['reply_to'] = template_reply_to.render(context).split(',')
 
-        # Send email
-        message = EmailMessage(**message_args)
-        message.send()
+        for address in addresses:
+
+            if self.subject:
+                message_args['subject'] = self.subject
+            else:
+                message_args['subject'] = self.title
+            if genemail:
+                template_from_email = Template(genemail)
+                message_args['from_email'] = template_from_email.render(context)
+            else:
+                template_from = Template(settings.EMAIL_ADDR)
+                message_args['from_email'] = template_from_email.render(context)
+            if self.reply_address:
+                template_reply_to = Template(self.reply_address)
+                message_args['reply_to'] = template_reply_to.render(context)
+            else:
+                template_reply_to = Template(settings.EMAIL_ADDR)
+                message_args['reply_to'] = template_reply_to.render(context)
+
+            mail.send(
+                address,
+                message_args['from_email'],
+                subject=message_args['subject'],
+                message='\n-------------------- \n' + message_args['body'],
+                headers={'Reply-to': message_args['reply_to']}
+            )
 
     def render_landing_page(self, request, form_submission=None):
 
@@ -2705,6 +2720,7 @@ class FormPageMixin(models.Model):
         landing page. E.g. you could return a redirect to a separate page.
         """
         if self.thank_you_page:
+            messages.success(request, _('Successfully submitted the form.'))
             return redirect(self.thank_you_page.url)
 
         context = self.get_context(request)
