@@ -1,11 +1,8 @@
 {% extends "website/pages/web_page.html" %}
 
-{% load wagtailcore_tags website_tags wagtailadmin_tags django_bootstrap5 wagtailsettings_tags %}
+{% load i18n wagtailcore_tags website_tags wagtailadmin_tags django_bootstrap5 wagtailsettings_tags %}
 
 {% block extra_head %}
-{% if not settings.website.AnalyticsSettings.ga_track_button_clicks %}
-<script type="text/javascript" src="{% versioned_static 'wagtailadmin/js/vendor/jquery-3.6.0.min.js' %}"></script>
-{% endif %}
 <script type="text/javascript" src="{% versioned_static 'website/js/modernizr.min.js' %}"></script>
 {% endblock %}
 
@@ -14,10 +11,10 @@
 {{ block.super }}
 
 {% if self.form_live %}
-<form class='{{ self.form_css_class }}' id='{{ self.form_id }}' action="{% pageurl self %}" method="POST" {% if form|is_file_form %}enctype="multipart/form-data"{% endif %}>
+<form class='{{ self.form_css_class }}'{% if self.form_id %} id='{{ self.form_id }}'{% endif%} action="{% pageurl self %}" method="POST" {% if form|is_file_form %}enctype="multipart/form-data"{% endif %}>
     {% csrf_token %}
 
-    {% bootstrap_form form layout='horizontal' %}
+    {% bootstrap_form form %}
 
     {% block captcha %}
         {% if self.spam_protection %}
@@ -26,9 +23,8 @@
     {% endblock %}
 
     <div class="form-group mt-5 row">
-        <div class="{{'horizontal_label_class'|bootstrap_settings}}"></div>
         <div class="{{'horizontal_field_class'|bootstrap_settings}}">
-            <button type="submit" class="btn {{self.button_size}} {{self.button_style}} {{self.button_css_class}}">
+            <button type="submit" class="btn{% if self.button_size %} {{self.button_size}}{% endif %} {{self.button_style}}{% if self.button_css_class %} {{self.button_css_class}}{% endif %}">
                 {{ self.button_text }}
             </button>
         </div>
@@ -42,7 +38,7 @@
 {% block required_scripts %}
 <script type="text/javascript">
 if ( $('form').length > 0) {
-    load_script(libs.modernizr, function() {
+    (Modernizr, function() {
         if ( (!Modernizr.inputtypes.date || !Modernizr.inputtypes.time) && $("input[type='date'], input[type='time']").length > 0) {
             load_script(libs.pickerbase, function() {
                 $(document).trigger("base-picker-loaded");
@@ -80,6 +76,16 @@ if ( $('form').length > 0) {
                     var clean = $.trim($(this).val());
                     if (clean != '') {
                         clean = moment(clean).format("L LT");
+                        $(this).val(clean);
+                    }
+                });
+            });
+        }
+    });
+}
+</script>
+{% endblock %}
+            clean = moment(clean).format("L LT");
                         $(this).val(clean);
                     }
                 });

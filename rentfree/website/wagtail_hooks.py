@@ -46,12 +46,19 @@ from drip.models import Drip, SentDrip, QuerySetRule
 from post_office.models import Log, Email, EmailTemplate
 from post_office.admin import SubjectField, CommaSeparatedEmailWidget, get_message_preview
 
+def clear_wagtailcache(*args, **kwargs):
+    clear_cache()
 
-@hooks.register('after_create_page')
-@hooks.register('after_edit_page')
-def clear_wagtailcache(request, page):
-    if page.live:
-        clear_cache()
+hooks.register('after_create_page', clear_wagtailcache)
+hooks.register('after_edit_page', clear_wagtailcache)
+hooks.register('after_delete_page', clear_wagtailcache)
+hooks.register('after_move_page', clear_wagtailcache)
+hooks.register('after_publish_page', clear_wagtailcache)
+hooks.register('after_unpublish_page', clear_wagtailcache)
+hooks.register('after_create_snippet', clear_wagtailcache)
+hooks.register('after_edit_snippet', clear_wagtailcache)
+hooks.register('after_delete_snippet', clear_wagtailcache)
+
 
 @hooks.register('filter_form_submissions_for_user')
 def website_forms(user, editable_forms):
