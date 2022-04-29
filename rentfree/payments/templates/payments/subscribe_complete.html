@@ -4,11 +4,16 @@
 {% block title %}{% basefilename %}{% endblock %}
 
 {% block content %}
-    <h2>{% trans 'Subscribe' %}</h2>
+    <h2>{% trans 'Success! Thank You!' %}</h2>
     <br />
-    <p>{% trans 'Success! If you are subscribing for the first time, your premium access details will be available on the ' %}<a href="{% url 'subscribe' %}">{% trans 'subscribe' %}</a> {% trans 'page you previously submitted' %}.</p> 
+    <h3>{% blocktrans %}What to do next{% endblocktrans %}:</h3>
+<p>{% blocktrans %}You should head to back to the {% endblocktrans %} <a href="{% url 'subscribe' %}">{% trans 'subscribe page via this link' %}</a> {% trans 'or the button below' %}. {% blocktrans %}You'll notice that it has changed, and now contains instructions on how to access our premium episodes.{% endblocktrans %}</p>
 
-    <p>{% trans 'If you changed your subscription, your premium content links will change as well, so you will need to update any RSS reader(s), podcast app(s), or other such devices and applications with your new subscription link(s).' %}</p>
+<a href="/subscribe/"><button class="my-4 primaryAction btn btn-primary">{% trans "Subscribe" %}</button></a>
+
+<p>{% blocktrans %}If you have subscribed to similar podcasts on Patreon or Substack, this process for adding the premium episodes to your podcast app or device of choice will be familiar. If not, check out our{% endblocktrans %} <a href="/support/">{% trans 'support' %}</a> {% blocktrans %}page for detailed instructions with screenshots.{% endblocktrans %}</p>
+
+    <p>{% trans 'If you arrived here after changing an existing subscription, your premium content links will change as well, so you will need to update any RSS reader(s), podcast app(s), or other such devices and applications with your new subscription link(s).' %}</p>
     
     <p class="mb-4">{% trans 'If you experience any difficulties, please ' %}<a href="mailto:{{ 'EMAIL_ADDR'|django_settings }}">{% trans 'contact us' %}</a>.</p>
 {% endblock %}
