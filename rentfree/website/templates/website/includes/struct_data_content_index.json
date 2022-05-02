@@ -36,19 +36,17 @@
     "itemListElement": [{
       "@type": "ListItem",
       "position": 1,
-      "name": "{{current_site.site_name}}",
       "item": {
-        "@type": "{% if settings.website.SeoSettings.struct_org_type %}{{settings.website.SeoSettings.struct_org_type}}{% else %}Organization{% endif %}",
+        "@name": "{{current_site.site_name}}",
         "@id": "{{current_site.root_url}}"
       }
     },
     {
       "@type": "ListItem",
       "position": 2,
-      "name": "{{self.title}}",
       "item": {
-        "@type": "WebPage",
-        "@id": "{{request.get_full_path}}"
+        "@name": "{{self.title}}",
+        "@id": "{{current_site.root_url}}{{request.get_full_path}}"
       }
     }]
   }
