@@ -1,10 +1,10 @@
 {% load wagtailcore_tags wagtailsettings_tags wagtailimages_tags website_tags %}{% get_settings use_default_site=True %}{% wagtail_site as current_site %}
 
-{% if latest_post_image %}
-{% image latest_post_image max-2000x2000 format-jpeg jpegquality-60 as background_image %}
+{% if self.background_image %}
+{% image self.background_image max-2000x2000 format-jpeg jpegquality-60 as background_image %}
 {% endif %}
 
-<div class="jumbotron-block{% if self.is_parallax %} parallax{% endif %}{% if self.tile_image %} tile{% endif %}{% if self.settings.custom_css_class %} {{self.settings.custom_css_class}}{% endif %}"{% if self.background_color or latest_post_image %} style="{% if self.background_color %}background-color:{{self.background_color}};{% endif %}{% if latest_post_image %}background-image:url({{background_image.url}});"{% endif %}{% endif %}{% if self.custom_css_id %} id="{{self.settings.custom_css_id}}"{% endif %}>
+<div class="jumbotron-block{% if self.is_parallax %} parallax{% endif %}{% if self.tile_image %} tile{% endif %}{% if self.settings.custom_css_class %} {{self.settings.custom_css_class}}{% endif %}"{% if self.background_color or background_image %} style="{% if self.background_color %}background-color:{{self.background_color}};{% endif %}{% if background_image %}background-image:url({{background_image.url}});"{% endif %}{% endif %}{% if self.custom_css_id %} id="{{self.settings.custom_css_id}}"{% endif %}>
   <div class="jumbotron-front"{% if self.foreground_color %} style="color:{{self.foreground_color}};"{% endif %}>
     {% include_block self.content %}
   </div>
