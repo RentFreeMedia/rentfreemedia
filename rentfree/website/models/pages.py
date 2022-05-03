@@ -1306,7 +1306,7 @@ class PodcastContentIndexPage(WagtailCacheMixin, RoutablePageMixin, WebPage):
         """
         querymodel = resolve_model_string(self.index_query_pagemodel, self._meta.app_label)
 
-         public = exclude_variants(querymodel.objects.child_of(self)).live().order_by('-date_display')
+        public = exclude_variants(querymodel.objects.child_of(self)).live().order_by('-date_display')
         if self.rss_omit_previews:
             all_public = public.exclude(episode_preview=True)
         else:
