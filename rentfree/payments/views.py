@@ -158,6 +158,18 @@ def subscribe_price_change(request, *args, **kwargs):
             user.paysubscribe_changed = timezone.now()
             user.save()
 
+            user_context = model_to_dict(user, exclude=['groups', 'password', 'user_permissions'])
+            request_context = { 'request': request }
+            template = loader.get_template('payments/email/subscribe_change.txt')
+            context = {**user_context, **request_context}
+            html_message = template.render(context)
+            mail.send(
+                user.email,
+                settings.EMAIL_ADDR,
+                subject='Subscription change confirmation for ' + request.get_host(),
+                html_message=html_message
+            )
+
             return render(request, 'payments/subscribe_complete.html')
         elif user and subscription.cancel_at_period_end == False:
             """Optionally, you could add flood control here by checking 
@@ -184,12 +196,25 @@ def subscribe_price_change(request, *args, **kwargs):
 
             user.save()
 
+            user_context = model_to_dict(user, exclude=['groups', 'password', 'user_permissions'])
+            request_context = { 'request': request }
+            template = loader.get_template('payments/email/subscribe_change.txt')
+            context = {**user_context, **request_context}
+            html_message = template.render(context)
+            mail.send(
+                user.email,
+                settings.EMAIL_ADDR,
+                subject='Subscription change confirmation for ' + request.get_host(),
+                html_message=html_message
+            )
+
             return render(request, 'payments/subscribe_complete.html')
         else:
             return render(request, '400.html')
     elif new_tier == '0' and request.user.is_paysubscribed > 0:
         try:
             user = request.user
+            user_email = user.email
             subscription_obj = Subscription.objects.get(djstripe_id=user.stripe_subscription_id)
             subscription = stripe.Subscription.retrieve(subscription_obj.id)
 
@@ -206,6 +231,18 @@ def subscribe_price_change(request, *args, **kwargs):
             user.paysubscribe_changed = timezone.now()
 
             user.save()
+
+            user_context = model_to_dict(user, exclude=['groups', 'password', 'user_permissions'])
+            request_context = { 'request': request }
+            template = loader.get_template('payments/email/subscribe_change.txt')
+            context = {**user_context, **request_context}
+            html_message = template.render(context)
+            mail.send(
+                user.email,
+                settings.EMAIL_ADDR,
+                subject='Subscription change confirmation for ' + request.get_host(),
+                html_message=html_message
+            )
 
             return render(request, 'payments/cancel_subscription.html')
         else:
@@ -303,6 +340,18 @@ def subscribe_complete(request, *args, **kwargs):
             user.paysubscribe_changed = timezone.now()
 
             user.save()
+
+            user_context = model_to_dict(user, exclude=['groups', 'password', 'user_permissions'])
+            request_context = { 'request': request }
+            template = loader.get_template('payments/email/subscribe_message.txt')
+            context = {**user_context, **request_context}
+            html_message = template.render(context)
+            mail.send(
+                user.email,
+                settings.EMAIL_ADDR,
+                subject='Thanks for becoming a patron of ' + request.get_host(),
+                html_message=html_message
+            )
 
             return render(request, 'payments/subscribe_complete.html')
         else:
@@ -426,7 +475,7 @@ def reset_user(request, uidb64):
         context = {**user_context, **request_context}
         html_message = template.render(context)
         mail.send(
-            user_email,
+            user.email,
             settings.EMAIL_ADDR,
             subject='Premium download link reset on ' + request.get_host(),
             html_message=html_message

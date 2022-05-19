@@ -1,0 +1,15 @@
+{% load account i18n wagtailcore_tags %}{% wagtail_site as current_site %}
+
+{% block content %}{% autoescape off %}
+<p>{% trans 'Hello' %} {% if first_name %}{{first_name}}{% elif user_name %}{{user_name}}{% else %}{{email}}{% endif %},</p>
+{% blocktrans with site_name=current_site.site_name site_domain=current_site.hostname %}
+
+<p>You are receiving this email to confirm a change to your account.</p>
+
+<p>If you cancelled your subscription, we're sorry to see you go!  Your subscription will automatically cancel at the end of your current billing period.</p>
+
+<p>If you changed your subscription to a different tier, your premium links will change as well. You will need to unfollow our premium episodes in your podcast apps or devices, and repeat the process explained in our support page to re-add your premium links.</p>
+
+<p>https://{{site_domain}}/support/<p>
+
+<p>If you have any questions or feedback, feel free to reply to this email for assistance.{% endblocktrans %}{% endautoescape %}{% endblock %}</p>

@@ -1,0 +1,24 @@
+{% load account i18n wagtailcore_tags %}{% wagtail_site as current_site %}
+
+{% block content %}{% autoescape off %}
+<p>{% trans 'Hello' %} {% if first_name %}{{first_name}}{% elif user_name %}{{user_name}}{% else %}{{email}}{% endif %},</p>
+{% blocktrans with site_name=current_site.site_name site_domain=current_site.hostname %}
+
+<p>Thanks for becoming a patron of {{site_name}}!</p>
+
+<p>You will receive a payment receipt separately from our credit card processor.</p>
+
+<p>To add our premium episodes to your preferred podcast apps or devices, you should return to:</p>
+
+    <p>https://{{site_domain}}/subscribe/</p>
+
+
+<p>You will notice that the page has changed since you submitted your payment. It will contain private link(s) that you can import into your apps and devices to access our premium content.</p>
+
+<p>You may also change your subscription, cancel your subscription, or change your payment method on the above page anytime.</p>
+
+<p>If you have subscribed to premium podcasts before on services such as Substack or Patreon, the process is similar.  If you have not subscribed to a premium podcast before, check our our support page for instructions with screenshots for Apple and Android devices:</p>
+
+<p>https://{{site_domain}}/support/<p>
+
+<p>If you have any questions or feedback, feel free to reply to this email for assistance.{% endblocktrans %}{% endautoescape %}{% endblock %}</p>

@@ -84,6 +84,20 @@ Users will only be given a premium RSS link if their subscription to a tier exis
 
 For users of Rent Free Media selling written content similar to what they would provide on a service such as Substack, premium RSS feeds are generated for the written content as well that works in the same manner a podcast RSS feed works, if the user chooses to use a news reader app to access premium articles.
 
+## Confirmation emails
+
+When a user creates a premium subscription or changes one, they will receive an email confirmation from your site depending on which action they took.  There are two templates which you may customize to tailor these messages to your needs.
+
+`payments / templates / payments / email / subscribe_message.txt` is the email users receive when they sign up for a new subscription.  By default it refers them back to the `/subscribe/` page to retrieve their private links to paid RSS feeds, and tells them that they may modify their account on the same page in the future.
+
+It also references a page called `/support/` which explains in detail how users can use private RSS links if you are publishing paid blog posts or paid podcast episodes.  Having a `/support/` page is required by Stripe as well, so you should have one to satisfy their requirements either way.  Now is a good time to make one.
+
+The other template, `payments / templates / payments / email / subscribe_change.txt` is sent to users when they change subscription tiers or cancel their account. It explains that they must retrieve new links if they change tiers.
+
+Note that both of these emails state that the user may reply to the email to contact you, so if you use a different contact email you'll want to customize that as well.
+
+As mentioned in [Customizing HTML Templates](/customizing_templates/), if you have enabled database template support in your site settings, you may simply override these templates in the CMS admin if you need to.
+
 ## Auditing Accounts and Users
 
 You can audit the most common Stripe subscription data via the `Subscriptions` portion of the main CMS menu.  Note that most menu items are not editable, they are for display purposes only, as subscription data should not be changed locally, but rather changed on Stripe and sent to your database afterward.
