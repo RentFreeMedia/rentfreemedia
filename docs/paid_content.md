@@ -96,7 +96,7 @@ The other template, `payments / templates / payments / email / subscribe_change.
 
 Note that both of these emails state that the user may reply to the email to contact you, so if you use a different contact email you'll want to customize that as well.
 
-As mentioned in [Customizing HTML Templates](/customizing_templates/), if you have enabled database template support in your site settings, you may simply override these templates in the CMS admin if you need to.
+As mentioned in [Customizing HTML Templates](customizing_templates.md), if you have enabled database template support in your site settings, you may simply override these templates in the CMS admin if you need to.
 
 ## Auditing Accounts and Users
 
