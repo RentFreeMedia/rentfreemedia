@@ -214,7 +214,6 @@ def subscribe_price_change(request, *args, **kwargs):
     elif new_tier == '0' and request.user.is_paysubscribed > 0:
         try:
             user = request.user
-            user_email = user.email
             subscription_obj = Subscription.objects.get(djstripe_id=user.stripe_subscription_id)
             subscription = stripe.Subscription.retrieve(subscription_obj.id)
 
