@@ -214,9 +214,9 @@ class ArticleFeed(Feed):
         last_year = str(self.last.first_published_at.year)
         first_year = str(self.first.first_published_at.year)
         if last_year == first_year:
-            return '&#169; ' + first_year + ', ' + copyright_string
+            return first_year + ', ' + copyright_string
         else:
-            return '&#169; ' + first_year + '-' + last_year + ', ' + copyright_string
+            return first_year + '-' + last_year + ', ' + copyright_string
 
     def get_object(self, request):
         return self.all_public
