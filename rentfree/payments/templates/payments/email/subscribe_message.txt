@@ -17,7 +17,7 @@
 
 <p>You may also change your subscription, cancel your subscription, or change your payment method on the above page anytime.</p>
 
-<p>If you have subscribed to premium podcasts before on services such as Substack or Patreon, the process is similar.  If you have not subscribed to a premium podcast before, check our our support page for instructions with screenshots for Apple and Android devices:</p>
+<p>If you have subscribed to premium podcasts before on services such as Substack or Patreon, using your private link(s) for our podcast is similar. If you have not subscribed to a premium podcast before, check our our support page for instructions with screenshots for Apple and Android devices:</p>
 
 <p>https://{{site_domain}}/support/<p>
 
