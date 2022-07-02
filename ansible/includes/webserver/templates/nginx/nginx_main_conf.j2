@@ -9,7 +9,7 @@ events {
 }
 http {
     server_names_hash_bucket_size 64;
-    proxy_cache_path /var/cache/nginx keys_zone=media-files:4m max_size=10g inactive=1440m use_temp_path=off;
+    proxy_cache_path /var/cache/nginx keys_zone=media-files:4m max_size=10g inactive=2880m use_temp_path=off;
     set_real_ip_from {{ ansible_private_ip_addr }};
     real_ip_header X-Forwarded-For;
     real_ip_recursive on; 
