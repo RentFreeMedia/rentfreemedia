@@ -6,7 +6,7 @@ As Rent Free Media is open source, you can do this on your own web host with you
 
 For those unfamiliar with the underlying frameworks, [Wagtail](https://wagtail.org) is a CMS and website building platform that sits atop [Django](https://djangoproject.com), a web framework originally written by newspaper publishers.
 
-Please start at the "Installing" menu on the left and follow along with this tutorial in its entirety if you are unfamiliar with Wagtail and Django, you will have much more success with this software if you read the docuemntation in full.  Publishing content isn't something one can just point and click their way through without understanding all of the particulars.  You need to know not only what to click and input, but how the software works to get optimal results.
+Please start at the "Installing" menu on the left and follow along with this tutorial in its entirety if you are unfamiliar with Wagtail and Django, you will have much more success with this software if you read the documentation in full.  Publishing content isn't something one can just point and click their way through without understanding all of the particulars.  You need to know not only what to click and input, but how the software works to get optimal results.
 
 While it's certainly possible to publish content to your site via a phone or other mobile device once it's all set up, for the purposes of going through this manual the first time, you'll probably want two browser windows on a laptop or desktop side by side to make it easy to follow.
 
