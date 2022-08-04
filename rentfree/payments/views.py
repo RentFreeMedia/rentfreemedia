@@ -392,18 +392,16 @@ def subscribe_update(request):
     except:
         tier_eq_objects = None
 
-    self = request
-
     if tier_gte_objects:
         user_gte_tiers = []
         for obj in tier_gte_objects:
-            if obj.test_user(self):
+            if obj.test_user(request):
                 user_gte_tiers += [obj.segment_id]
 
     if tier_eq_objects:
         user_eq_tiers = []
         for obj in tier_eq_objects:
-            if obj.test_user(self):
+            if obj.test_user(request):
                 user_eq_tiers += [obj.segment_id]
 
     private_queryset_pages = PodcastContentPage.objects.none()
