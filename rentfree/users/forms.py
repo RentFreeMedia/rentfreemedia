@@ -13,6 +13,7 @@ from wagtail.contrib.forms.models import AbstractFormField
 from wagtail.users.models import UserProfile
 from users.models import CustomUserProfile
 from phonenumber_field.widgets import PhoneNumberInternationalFallbackWidget
+from allauth.account.adapter import get_adapter
 from allauth.account import app_settings
 from allauth.account import forms as allauthforms
 from allauth.socialaccount import forms as allauthsocialforms
