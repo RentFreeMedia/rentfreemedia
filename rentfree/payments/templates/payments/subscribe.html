@@ -20,6 +20,7 @@
    <div class="row">
     {% for product in products %}
     {% for price in product.plan_set.all %}
+    {% if price.active == True %}
     <div class="col col-md-4 pb-4 mx-auto">
     <div class="card mb-4 h-100">
      <div class="card-body" id="{{ product.name|slugify }}-card" role="button" onclick="planSelect('{{ product.name|slugify }}-card', '{{ product.name }}', '{{ price.human_readable_price }}', '{{ product.metadata|get_tier }}')">
@@ -29,6 +30,7 @@
     </div>
   </div>
 </div>
+    {% endif %}
     {% endfor %}
     {% endfor %}
 </div>
