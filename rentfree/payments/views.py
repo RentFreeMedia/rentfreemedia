@@ -94,7 +94,7 @@ def subscribe_checkout_session(request):
     data = json.loads(request.body)
     token = subscribe_token.make_token(request.user)
     product_obj = Product.objects.get(metadata={'tier': data['product_tier']})
-    price_obj = Price.objects.get(product_id=product_obj.id)
+    price_obj = Price.objects.get(product_id=product_obj.id, active=True)
 
     checkout_session = stripe.checkout.Session.create(
         success_url = data['domain'] + '/subscribe-complete/{CHECKOUT_SESSION_ID}/',
@@ -133,7 +133,7 @@ def subscribe_price_change(request, *args, **kwargs):
         try:
             user = request.user
             product_obj = Product.objects.get(metadata={'tier': new_tier})
-            price_obj = Price.objects.get(product_id=product_obj.id)
+            price_obj = Price.objects.get(product_id=product_obj.id, active=True)
             subscription_obj = Subscription.objects.get(djstripe_id=user.stripe_subscription_id)
             subscription = stripe.Subscription.retrieve(subscription_obj.id)
 
