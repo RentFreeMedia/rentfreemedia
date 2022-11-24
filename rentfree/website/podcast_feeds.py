@@ -140,16 +140,17 @@ class iTunesPodcastsFeedGenerator(Rss201rev2Feed):
         # Author information.
         if item['item_episode_type'] is not None:
            handler.addQuickElement("itunes:episodeType", item['item_episode_type'])
-        for author in item["item_authors"]:
-            if author.author_display:
-                handler.addQuickElement("dc:creator", author.author_display)
-            elif author.first_name and author.last_name:
-                handler.addQuickElement("dc:creator", author.first_name + ' ' + author.last_name)
-            elif author.user_name:
-                handler.addQuickElement("dc:creator", author.user_name)
-            else:
-                author.first_name
-        if item["item_contributors"]:
+        if item['item_authors'] is not None:
+            for author in item["item_authors"]:
+                if author.author_display:
+                    handler.addQuickElement("dc:creator", author.author_display)
+                elif author.first_name and author.last_name:
+                    handler.addQuickElement("dc:creator", author.first_name + ' ' + author.last_name)
+                elif author.user_name:
+                    handler.addQuickElement("dc:creator", author.user_name)
+                else:
+                    author.first_name
+        if item['item_contributors'] is not None:
             for contributor in item["item_contributors"]:
                 if contributor.contributor_display:
                     handler.addQuickElement("dc:contributor", contributor.contributor_display)
