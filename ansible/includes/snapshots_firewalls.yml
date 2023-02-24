@@ -1,3 +1,10 @@
+    - name: Enable long-running services for rentfree webserver user...
+      ansible.builtin.command: "/bin/loginctl enable-linger rentfree"
+      register: rentfree_longrunning_enable
+      retries: 3
+      delay: 5
+      until: rentfree_longrunning_enable.failed == False
+
     - name: Enable rentfree gunicorn systemd service...
       ansible.builtin.command: "/usr/bin/systemctl enable gunicorn.service --user"
       become: True
