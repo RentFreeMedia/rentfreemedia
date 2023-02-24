@@ -6,7 +6,7 @@
       until: rentfree_longrunning_enable.failed == False
 
     - name: Enable rentfree gunicorn systemd service...
-      ansible.builtin.command: "/usr/bin/systemctl enable gunicorn.service --user"
+      ansible.builtin.command: "/bin/systemctl enable gunicorn.service --user"
       become: True
       become_user: rentfree
       args:
