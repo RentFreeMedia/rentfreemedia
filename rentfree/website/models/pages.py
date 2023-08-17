@@ -2015,6 +2015,7 @@ class ArticleContentPage(WagtailCacheMixin, PersonalisablePageMixin, WebPage):
         FieldPanel('front_page'),
         FieldPanel('caption'),
         FieldPanel('date_display'),
+        FieldPanel('first_published_at', help_text='The date this article/episode was first published, you should only change this to modify the auto-generated date.'),
         MultiFieldPanel(
             [
                 InlinePanel('author', label="Author/Host/Creator"),
@@ -2342,6 +2343,7 @@ class PodcastContentPage(WagtailCacheMixin, PersonalisablePageMixin, WebPage):
         FieldPanel('front_page'),
         FieldPanel('caption'),
         FieldPanel('date_display'),
+        FieldPanel('first_published_at', help_text='The date this article/episode was first published, you should only change this to modify the auto-generated date.'),
         MultiFieldPanel(
             [
                 InlinePanel('author', label="Author/Host/Creator"),
