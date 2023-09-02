@@ -130,7 +130,7 @@ POST_OFFICE = {
     'LOG_LEVEL': 1, # Database log: 0 = none, 1 = failed, 2 = all
     'BATCH_SIZE': 50,
     'BACKENDS': {
-        'default': 'smtp.EmailBackend',
+        'default': 'django.core.mail.backends.smtp.EmailBackend',
     }
 }
 
