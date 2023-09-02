@@ -16,6 +16,16 @@ To install them, run:
 
 `ansible-galaxy collection install amazon.aws community.crypto community.digitalocean community.general `
 
+## Setting your SSH private key
+
+In the file `ansible/main.yml` there's a variable at the top which specifies which private key you wish to use on the server(s) after deployment.
+
+My example is in there as the default:
+
+`ansible_ssh_private_key_file:` /Users/robertclayton/.ssh/rentfree_rsa
+
+You should change /Users/xxx/.ssh/rentfree.rsa to your own private SSH key.
+
 ## Running
 
 Next, execute the following to start the deployment:
